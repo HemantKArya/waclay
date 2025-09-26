@@ -81,6 +81,10 @@ jobs:
           sudo apt-get install -y mingw-w64
         fi
 
+    - name: Install cargo-ndk
+      if: contains(matrix.target, 'android')
+      run: cargo install cargo-ndk --locked
+
     - name: Cache Cargo registry
       uses: actions/cache@v4
       with:
@@ -108,20 +112,30 @@ jobs:
 
     - name: Build examples
       run: |
-        # Build core examples for all targets
-        cargo build --example record_response --target ${{ matrix.target }}
-        cargo build --example complex_return --target ${{ matrix.target }}
-        cargo build --example variant_return --target ${{ matrix.target }}
-        cargo build --example func_param --target ${{ matrix.target }}
-        cargo build --example string_host_guest --target ${{ matrix.target }}
+        core_examples=(
+          record_response
+          complex_return
+          variant_return
+          func_param
+          string_host_guest
+        )
 
-        # Build additional examples for native targets
-        if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
-          cargo build --example guest_resource --target ${{ matrix.target }}
-          cargo build --example multilevel_resource --target ${{ matrix.target }}
-          cargo build --example option_result --target ${{ matrix.target }}
-          cargo build --example resource --target ${{ matrix.target }}
-          cargo build --example single_component --target ${{ matrix.target }}
+        if [[ "${{ matrix.target }}" == *"android"* ]]; then
+          for example in "${core_examples[@]}"; do
+            cargo ndk --target ${{ matrix.target }} --platform 21 build --example "$example"
+          done
+        else
+          for example in "${core_examples[@]}"; do
+            cargo build --example "$example" --target ${{ matrix.target }}
+          done
+
+          if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
+            cargo build --example guest_resource --target ${{ matrix.target }}
+            cargo build --example multilevel_resource --target ${{ matrix.target }}
+            cargo build --example option_result --target ${{ matrix.target }}
+            cargo build --example resource --target ${{ matrix.target }}
+            cargo build --example single_component --target ${{ matrix.target }}
+          fi
         fi
 
     - name: Run example tests (native Linux only)
