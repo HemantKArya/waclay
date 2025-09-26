@@ -1,0 +1,14 @@
+package test:guest;
+
+interface message {
+    record response {
+        id: u32,
+        reply: string,
+    }
+    /// Processes a message from host and calls back to host
+    process-message: func(input: string) -> response;
+}
+
+world guest {
+    export message;
+}
