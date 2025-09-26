@@ -5,7 +5,7 @@ const WASM: &[u8] = include_bytes!("string_host_guest/component.wasm");
 
 pub fn main() {
     println!("=== String Host-Guest Communication Demo ===");
-    
+
     // Create a new engine for instantiating a component.
     let engine = Engine::new(wasmi_runtime_layer::Engine::default());
 
@@ -36,7 +36,10 @@ pub fn main() {
                         _ => panic!("Unexpected parameter type"),
                     };
 
-                    println!("[Host Function Called] Received from guest: '{}'", message.to_string());
+                    println!(
+                        "[Host Function Called] Received from guest: '{}'",
+                        message.to_string()
+                    );
                     Ok(())
                 },
             ),
@@ -51,7 +54,7 @@ pub fn main() {
         .exports()
         .instance(&"test:guest/message".try_into().unwrap())
         .unwrap();
-        
+
     // Get the process-message function from the guest component.
     let process_message = interface
         .func("process-message")
@@ -60,7 +63,9 @@ pub fn main() {
         .unwrap();
 
     // Call the guest function with "hello" - this will trigger the guest to call back to host
-    let result = process_message.call(&mut store, "hello".to_string()).unwrap();
-    
+    let result = process_message
+        .call(&mut store, "hello".to_string())
+        .unwrap();
+
     println!("[Host] Guest returned: '{}'", result);
 }

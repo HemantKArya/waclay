@@ -20,7 +20,13 @@ impl ComponentType for Status {
                 [
                     VariantCase::new("pending", None),
                     VariantCase::new("running", Some(ValueType::String)),
-                    VariantCase::new("completed", Some(ValueType::Result(ResultType::new(Some(ValueType::String), Some(ValueType::String))))),
+                    VariantCase::new(
+                        "completed",
+                        Some(ValueType::Result(ResultType::new(
+                            Some(ValueType::String),
+                            Some(ValueType::String),
+                        ))),
+                    ),
                     VariantCase::new("failed", Some(ValueType::String)),
                 ],
             )
@@ -48,8 +54,12 @@ impl ComponentType for Status {
                 "completed" => {
                     if let Some(Value::Result(res)) = payload {
                         let result = match res.as_ref() {
-                            std::result::Result::Ok(Some(Value::String(s))) => std::result::Result::<String, String>::Ok(s.to_string()),
-                            std::result::Result::Err(Some(Value::String(s))) => std::result::Result::<String, String>::Err(s.to_string()),
+                            std::result::Result::Ok(Some(Value::String(s))) => {
+                                std::result::Result::<String, String>::Ok(s.to_string())
+                            }
+                            std::result::Result::Err(Some(Value::String(s))) => {
+                                std::result::Result::<String, String>::Err(s.to_string())
+                            }
                             _ => bail!("Invalid result structure in completed case"),
                         };
                         Ok(Status::Completed(result))
@@ -77,10 +87,17 @@ impl ComponentType for Status {
             [
                 VariantCase::new("pending", None),
                 VariantCase::new("running", Some(ValueType::String)),
-                VariantCase::new("completed", Some(ValueType::Result(ResultType::new(Some(ValueType::String), Some(ValueType::String))))),
+                VariantCase::new(
+                    "completed",
+                    Some(ValueType::Result(ResultType::new(
+                        Some(ValueType::String),
+                        Some(ValueType::String),
+                    ))),
+                ),
                 VariantCase::new("failed", Some(ValueType::String)),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         let (discriminant, payload) = match self {
             Status::Pending => (0, None),
@@ -89,11 +106,11 @@ impl ComponentType for Status {
                 let result_value = match result {
                     std::result::Result::Ok(s) => ResultValue::new(
                         ResultType::new(Some(ValueType::String), Some(ValueType::String)),
-                        std::result::Result::Ok(Some(Value::String(s.into())))
+                        std::result::Result::Ok(Some(Value::String(s.into()))),
                     )?,
                     std::result::Result::Err(s) => ResultValue::new(
                         ResultType::new(Some(ValueType::String), Some(ValueType::String)),
-                        std::result::Result::Err(Some(Value::String(s.into())))
+                        std::result::Result::Err(Some(Value::String(s.into()))),
                     )?,
                 };
                 (2, Some(Value::Result(result_value)))
@@ -159,11 +176,13 @@ pub fn main() {
     let get_status_manual = interface.func("get-status").unwrap();
 
     let mut results = vec![Value::Bool(false)]; // dummy value to be overwritten
-    get_status_manual.call(
-        &mut store,
-        &[], // no parameters
-        &mut results
-    ).unwrap();
+    get_status_manual
+        .call(
+            &mut store,
+            &[], // no parameters
+            &mut results,
+        )
+        .unwrap();
 
     if let Value::Variant(variant) = &results[0] {
         println!("[Host] Manual variant handling:");
@@ -183,8 +202,12 @@ pub fn main() {
             "completed" => {
                 if let Some(Value::Result(res)) = payload {
                     match res.as_ref() {
-                        std::result::Result::Ok(Some(Value::String(s))) => println!("  └ Status: Completed - {}", s),
-                        std::result::Result::Err(Some(Value::String(s))) => println!("  └ Status: Completed with error - {}", s),
+                        std::result::Result::Ok(Some(Value::String(s))) => {
+                            println!("  └ Status: Completed - {}", s)
+                        }
+                        std::result::Result::Err(Some(Value::String(s))) => {
+                            println!("  └ Status: Completed with error - {}", s)
+                        }
                         _ => println!("  └ Status: Invalid result structure"),
                     }
                 }

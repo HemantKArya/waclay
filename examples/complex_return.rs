@@ -22,8 +22,17 @@ impl ComponentType for ComplexData {
                     ("id", ValueType::U32),
                     ("name", ValueType::String),
                     ("values", ValueType::List(ListType::new(ValueType::F64))),
-                    ("metadata", ValueType::Option(OptionType::new(ValueType::String))),
-                    ("status", ValueType::Result(ResultType::new(Some(ValueType::String), Some(ValueType::String)))),
+                    (
+                        "metadata",
+                        ValueType::Option(OptionType::new(ValueType::String)),
+                    ),
+                    (
+                        "status",
+                        ValueType::Result(ResultType::new(
+                            Some(ValueType::String),
+                            Some(ValueType::String),
+                        )),
+                    ),
                 ],
             )
             .unwrap(),
@@ -32,19 +41,43 @@ impl ComponentType for ComplexData {
 
     fn from_value(value: &Value) -> Result<Self> {
         if let Value::Record(record) = value {
-            let id = record.field("id").ok_or_else(|| anyhow!("Missing 'id' field"))?;
-            let name = record.field("name").ok_or_else(|| anyhow!("Missing 'name' field"))?;
-            let values = record.field("values").ok_or_else(|| anyhow!("Missing 'values' field"))?;
-            let metadata = record.field("metadata").ok_or_else(|| anyhow!("Missing 'metadata' field"))?;
-            let status = record.field("status").ok_or_else(|| anyhow!("Missing 'status' field"))?;
+            let id = record
+                .field("id")
+                .ok_or_else(|| anyhow!("Missing 'id' field"))?;
+            let name = record
+                .field("name")
+                .ok_or_else(|| anyhow!("Missing 'name' field"))?;
+            let values = record
+                .field("values")
+                .ok_or_else(|| anyhow!("Missing 'values' field"))?;
+            let metadata = record
+                .field("metadata")
+                .ok_or_else(|| anyhow!("Missing 'metadata' field"))?;
+            let status = record
+                .field("status")
+                .ok_or_else(|| anyhow!("Missing 'status' field"))?;
 
-            let id = if let Value::U32(x) = id { x } else { bail!("'id' field is not U32") };
-            let name = if let Value::String(s) = name { s.to_string() } else { bail!("'name' field is not String") };
+            let id = if let Value::U32(x) = id {
+                x
+            } else {
+                bail!("'id' field is not U32")
+            };
+            let name = if let Value::String(s) = name {
+                s.to_string()
+            } else {
+                bail!("'name' field is not String")
+            };
             let values = Vec::<f64>::from_value(&values)?;
             let metadata = Option::<String>::from_value(&metadata)?;
             let status = Result::<String, String>::from_value(&status)?;
 
-            Ok(ComplexData { id, name, values, metadata, status })
+            Ok(ComplexData {
+                id,
+                name,
+                values,
+                metadata,
+                status,
+            })
         } else {
             bail!("Expected Record value")
         }
@@ -58,8 +91,17 @@ impl ComponentType for ComplexData {
                     ("id", ValueType::U32),
                     ("name", ValueType::String),
                     ("values", ValueType::List(ListType::new(ValueType::F64))),
-                    ("metadata", ValueType::Option(OptionType::new(ValueType::String))),
-                    ("status", ValueType::Result(ResultType::new(Some(ValueType::String), Some(ValueType::String)))),
+                    (
+                        "metadata",
+                        ValueType::Option(OptionType::new(ValueType::String)),
+                    ),
+                    (
+                        "status",
+                        ValueType::Result(ResultType::new(
+                            Some(ValueType::String),
+                            Some(ValueType::String),
+                        )),
+                    ),
                 ],
             )
             .unwrap(),
@@ -124,11 +166,13 @@ pub fn main() {
     let get_complex_data_manual = interface.func("get-complex-data").unwrap();
 
     let mut results = vec![Value::Bool(false)]; // dummy value to be overwritten
-    get_complex_data_manual.call(
-        &mut store,
-        &[], // no parameters
-        &mut results
-    ).unwrap();
+    get_complex_data_manual
+        .call(
+            &mut store,
+            &[], // no parameters
+            &mut results,
+        )
+        .unwrap();
 
     if let Value::Record(record) = &results[0] {
         println!("[Host] Manual handling of complex record:");
@@ -139,7 +183,8 @@ pub fn main() {
             println!("  └ name: '{}'", name);
         }
         if let Some(Value::List(values_list)) = record.field("values") {
-            let values: Vec<f64> = Vec::<f64>::from_value(&Value::List(values_list.clone())).unwrap_or_default();
+            let values: Vec<f64> =
+                Vec::<f64>::from_value(&Value::List(values_list.clone())).unwrap_or_default();
             println!("  └ values: {:?}", values);
         }
         if let Some(Value::Option(opt)) = record.field("metadata") {
@@ -151,8 +196,12 @@ pub fn main() {
         }
         if let Some(Value::Result(res)) = record.field("status") {
             match res.as_ref() {
-                std::result::Result::Ok(Some(Value::String(s))) => println!("  └ status: Ok('{}')", s),
-                std::result::Result::Err(Some(Value::String(s))) => println!("  └ status: Err('{}')", s),
+                std::result::Result::Ok(Some(Value::String(s))) => {
+                    println!("  └ status: Ok('{}')", s)
+                }
+                std::result::Result::Err(Some(Value::String(s))) => {
+                    println!("  └ status: Err('{}')", s)
+                }
                 _ => println!("  └ status: Invalid structure"),
             }
         }
