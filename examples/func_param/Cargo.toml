@@ -5,8 +5,6 @@ name = "component_example"
 version = "0.1.0"
 edition = "2021"
 
-forced-target = "wasm32-unknown-unknown"
-
 [lib]
 crate-type = ["cdylib"]
 
