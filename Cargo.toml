@@ -27,5 +27,5 @@ wit-parser = { version = "0.13.0", default-features = false }
 serde = [ "dep:serde", "semver/serde" ]
 
 [dev-dependencies]
-wasmi = "0.31.1"
-wasmi_runtime_layer = "0.31.0"
+wasmi = "0.32"
+wasmi_runtime_layer = "0.51"

@@ -832,7 +832,7 @@ impl ResourceOwn {
     }
 
     /// Gets the internal representation of this resource. Fails if this is not a host resource, or if the resource was already dropped.
-    pub fn rep<'a, T: 'static + Send + Sync, S, E: wasm_runtime_layer::backend::WasmEngine>(
+    pub fn rep<'a, T: 'static + Send + Sync, S: 'static, E: wasm_runtime_layer::backend::WasmEngine>(
         &self,
         ctx: &'a crate::StoreContext<S, E>,
     ) -> Result<&'a T> {
@@ -859,7 +859,7 @@ impl ResourceOwn {
     }
 
     /// Gets the internal mut representation of this resource. Fails if this is not a host resource, or if the resource was already dropped.
-    pub fn rep_mut<'a, T: 'static + Send + Sync, S, E: wasm_runtime_layer::backend::WasmEngine>(
+    pub fn rep_mut<'a, T: 'static + Send + Sync, S: 'static, E: wasm_runtime_layer::backend::WasmEngine>(
         &self,
         ctx: &'a mut crate::StoreContextMut<S, E>,
     ) -> Result<&'a mut T> {
@@ -1018,7 +1018,7 @@ impl ResourceBorrow {
     }
 
     /// Gets the internal representation of this resource. Fails if this is not a host resource, or if the resource was already dropped.
-    pub fn rep<'a, T: 'static + Send + Sync, S, E: wasm_runtime_layer::backend::WasmEngine>(
+    pub fn rep<'a, T: 'static + Send + Sync, S: 'static, E: wasm_runtime_layer::backend::WasmEngine>(
         &self,
         ctx: &'a crate::StoreContext<S, E>,
     ) -> Result<&'a T> {
@@ -1045,7 +1045,7 @@ impl ResourceBorrow {
     }
 
     /// Gets the internal mut representation of this resource. Fails if this is not a host resource, or if the resource was already dropped.
-    pub fn rep_mut<'a, T: 'static + Send + Sync, S, E: wasm_runtime_layer::backend::WasmEngine>(
+    pub fn rep_mut<'a, T: 'static + Send + Sync, S: 'static, E: wasm_runtime_layer::backend::WasmEngine>(
         &self,
         ctx: &'a mut crate::StoreContextMut<S, E>,
     ) -> Result<&'a mut T> {
