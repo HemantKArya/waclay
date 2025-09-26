@@ -2,7 +2,6 @@ use std::marker::*;
 use std::mem::*;
 use std::sync::atomic::*;
 use std::sync::*;
-use std::usize;
 
 use bytemuck::*;
 use wasm_runtime_layer::*;
@@ -1007,16 +1006,18 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
                     Value::Variant(x) => (x.discriminant(), x.value()),
                     Value::Enum(x) => (x.discriminant(), None),
                     Value::Option(x) => {
-                        (x.is_some().then_some(1).unwrap_or_default(), (*x).clone())
+                        let discriminant = if x.is_some() { 1 } else { 0 };
+                        (discriminant, (*x).clone())
                     }
-                    Value::Result(x) => (
-                        x.is_err().then_some(1).unwrap_or_default(),
-                        match &*x {
+                    Value::Result(x) => {
+                        let discriminant = if x.is_err() { 1 } else { 0 };
+                        let value = match &*x {
                             std::result::Result::Ok(y) => y,
                             std::result::Result::Err(y) => y,
                         }
-                        .clone(),
-                    ),
+                        .clone();
+                        (discriminant, value)
+                    }
                     _ => bail!("Invalid type for which to extract variant."),
                 };
 
