@@ -138,7 +138,7 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
       with:
-        targets: wasm32-unknown-unknown,wasm32-wasi
+        targets: wasm32-unknown-unknown,wasm32-wasip1
 
     - name: Install wasm-tools
       run: |
