@@ -1,0 +1,16 @@
+package test:guest;
+
+interface message {
+    /// Processes a message from host and calls back to host
+    process-message: func(input: string) -> string;
+}
+
+interface host-logger {
+    /// Host function that the guest can call to log messages
+    host-log: func(message: string);
+}
+
+world guest {
+    import host-logger;
+    export message;
+}
