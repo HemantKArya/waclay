@@ -3,7 +3,7 @@ use wasm_component_layer::*;
 
 // The bytes of the component.
 const WASM: &[u8] =
-    include_bytes!("./guest_resource/target/wasm32-unknown-unknown/debug/guest_resource.wasm");
+    include_bytes!("./guest_resource/component.wasm");
 
 pub fn main() {
     // Create a new engine for instantiating a component.
