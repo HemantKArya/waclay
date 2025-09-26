@@ -148,8 +148,8 @@ jobs:
 
     - name: Install wasm-tools
       run: |
-        curl -L https://github.com/bytecodealliance/wasm-tools/releases/download/v1.239.0/wasm-tools-1.239.0-x86_64-linux.tar.gz | tar xzf -
-        sudo mv wasm-tools-1.239.0-x86_64-linux/wasm-tools /usr/local/bin/
+        curl -sSfL https://github.com/bytecodealliance/wasm-tools/releases/download/v1.0.53/wasm-tools-1.0.53-x86_64-linux.tar.xz | tar xJf -
+        sudo mv wasm-tools-1.0.53-x86_64-linux/wasm-tools /usr/local/bin/
 
     - name: Cache Cargo registry
       uses: actions/cache@v4
