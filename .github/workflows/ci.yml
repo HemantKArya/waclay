@@ -70,9 +70,12 @@ jobs:
           unzip -q android-ndk-r27d-linux.zip
           echo "ANDROID_NDK_HOME=$PWD/android-ndk-r27d" >> $GITHUB_ENV
           echo "$PWD/android-ndk-r27d/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
-        elif [[ "${{ matrix.target }}" == *"arm"* ]] || [[ "${{ matrix.target }}" == *"aarch64"* ]]; then
+        elif [[ "${{ matrix.target }}" == *"aarch64"* ]]; then
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf gcc-aarch64-linux-gnu
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+        elif [[ "${{ matrix.target }}" == *"armv7"* ]]; then
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf
         fi
 
     - name: Cache Cargo registry
