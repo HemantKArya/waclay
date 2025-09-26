@@ -340,7 +340,7 @@ impl RecordType {
     pub fn field_ty(&self, name: impl AsRef<str>) -> Option<ValueType> {
         self.fields
             .iter()
-            .filter(|&(_, x, _val)| (&**x == name.as_ref()))
+            .filter(|&(_, x, _val)| &**x == name.as_ref())
             .map(|(_, _x, val)| val.clone())
             .next()
     }

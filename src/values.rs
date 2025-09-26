@@ -355,7 +355,7 @@ impl Record {
     pub fn field(&self, field: impl AsRef<str>) -> Option<Value> {
         self.fields
             .iter()
-            .filter(|&(name, _val)| (&**name == field.as_ref()))
+            .filter(|&(name, _val)| &**name == field.as_ref())
             .map(|(_name, val)| val.clone())
             .next()
     }
