@@ -76,6 +76,9 @@ jobs:
         elif [[ "${{ matrix.target }}" == *"armv7"* ]]; then
           sudo apt-get update
           sudo apt-get install -y gcc-arm-linux-gnueabihf
+        elif [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]; then
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
         fi
 
     - name: Cache Cargo registry
@@ -145,8 +148,8 @@ jobs:
 
     - name: Install wasm-tools
       run: |
-        curl -L https://github.com/bytecodealliance/wasm-tools/releases/download/v1.0.53/wasm-tools-1.0.53-x86_64-linux.tar.gz | tar xzf -
-        sudo mv wasm-tools-1.0.53-x86_64-linux/wasm-tools /usr/local/bin/
+        curl -L https://github.com/bytecodealliance/wasm-tools/releases/download/v1.239.0/wasm-tools-1.239.0-x86_64-linux.tar.gz | tar xzf -
+        sudo mv wasm-tools-1.239.0-x86_64-linux/wasm-tools /usr/local/bin/
 
     - name: Cache Cargo registry
       uses: actions/cache@v4
