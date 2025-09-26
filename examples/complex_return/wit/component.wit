@@ -1,0 +1,17 @@
+package test:guest;
+
+interface exports {
+    record complex-data {
+        id: u32,
+        name: string,
+        values: list<f64>,
+        metadata: option<string>,
+        status: result<string, string>,
+    }
+
+    get-complex-data: func() -> complex-data;
+}
+
+world guest {
+    export exports;
+}
