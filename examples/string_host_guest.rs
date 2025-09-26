@@ -36,10 +36,7 @@ pub fn main() {
                         _ => panic!("Unexpected parameter type"),
                     };
 
-                    println!(
-                        "[Host Function Called] Received from guest: '{}'",
-                        message.to_string()
-                    );
+                    println!("[Host Function Called] Received from guest: '{}'", message);
                     Ok(())
                 },
             ),

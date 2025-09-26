@@ -37,7 +37,7 @@ pub fn main() {
                     };
 
                     println!("[HostLog] log");
-                    println!(" └ {}", params.to_string());
+                    println!(" └ {}", params);
                     Ok(())
                 },
             ),

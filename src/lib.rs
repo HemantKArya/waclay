@@ -184,7 +184,7 @@ impl Component {
             modules.insert(
                 id,
                 ModuleTranslation {
-                    module: Module::new(engine, &module.wasm[..])?,
+                    module: Module::new(engine, module.wasm)?,
                     translation: module.module,
                 },
             );
