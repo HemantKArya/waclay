@@ -216,16 +216,6 @@ jobs:
       with:
         components: rustfmt, clippy
 
-    - name: Cache Cargo registry
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-        key: ubuntu-lint-cargo-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ubuntu-lint-cargo-
-
     - name: Check formatting
       run: cargo fmt --all -- --check
 
