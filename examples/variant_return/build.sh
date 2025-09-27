@@ -4,4 +4,4 @@
 cargo build --target wasm32-unknown-unknown
 
 # Generate the component
-wasm-tools component new target/wasm32-unknown-unknown/debug/component_example.wasm -o component.wasm
+wasm-tools component new target/wasm32-unknown-unknown/debug/variant_return_guest.wasm -o component.wasm
