@@ -8,11 +8,10 @@ Before using `wasm_component_layer`, you need to add it to your `Cargo.toml` alo
 
 ```toml
 [dependencies]
-wasm_component_layer = "0.1.16"
-wasmi_runtime_layer = "0.31.0"
+wasm_component_layer = {git = "https://github.com/HemantKArya/wcomp_layer.git"}
 # OR
-# wasmtime_runtime_layer = "21.0.0"
-# js_wasm_runtime_layer = "0.4.0"
+wasm_component_layer = "0.1.18"
+wasmi_runtime_layer = { version = "0.51" }
 ```
 
 ## Basic Usage
