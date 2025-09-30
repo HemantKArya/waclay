@@ -430,6 +430,9 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
                         WasmType::I64 => results.push(Value::S64(0)),
                         WasmType::F32 => results.push(Value::F32(0.0)),
                         WasmType::F64 => results.push(Value::F64(0.0)),
+                        WasmType::Pointer | WasmType::PointerOrI64 | WasmType::Length => {
+                            results.push(Value::S32(0))
+                        }
                     }
                 }
             }
@@ -690,8 +693,8 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
                 realloc: _,
             } => {
                 let list = require_matches!(operands.pop(), Some(Value::List(x)), x);
-                let align = self.component.size_align.align(element);
-                let size = self.component.size_align.size(element);
+                let align = self.component.size_align.align(element).align_wasm32();
+                let size = self.component.size_align.size(element).size_wasm32();
 
                 let realloc = self.realloc.as_ref().expect("No realloc.");
                 let args = [
@@ -713,8 +716,8 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
                     Type::S16 => self.store_array(ptr as usize, list.typed::<i16>()?)?,
                     Type::S32 => self.store_array(ptr as usize, list.typed::<i32>()?)?,
                     Type::S64 => self.store_array(ptr as usize, list.typed::<i64>()?)?,
-                    Type::Float32 => self.store_array(ptr as usize, list.typed::<f32>()?)?,
-                    Type::Float64 => self.store_array(ptr as usize, list.typed::<f64>()?)?,
+                    Type::F32 => self.store_array(ptr as usize, list.typed::<f32>()?)?,
+                    Type::F64 => self.store_array(ptr as usize, list.typed::<f64>()?)?,
                     _ => unreachable!(),
                 }
 
@@ -727,8 +730,8 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
                 len,
             } => {
                 let list = require_matches!(operands.pop(), Some(Value::List(x)), x);
-                let align = self.component.size_align.align(element);
-                let size = self.component.size_align.size(element);
+                let align = self.component.size_align.align(element).align_wasm32();
+                let size = self.component.size_align.size(element).size_wasm32();
 
                 let realloc = self.realloc.as_ref().expect("No realloc.");
                 let args = [
@@ -797,8 +800,8 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
                     Type::S16 => self.load_array::<i16>(ptr as usize, len as usize)?.into(),
                     Type::S32 => self.load_array::<i32>(ptr as usize, len as usize)?.into(),
                     Type::S64 => self.load_array::<i64>(ptr as usize, len as usize)?.into(),
-                    Type::Float32 => self.load_array::<f32>(ptr as usize, len as usize)?.into(),
-                    Type::Float64 => self.load_array::<f64>(ptr as usize, len as usize)?.into(),
+                    Type::F32 => self.load_array::<f32>(ptr as usize, len as usize)?.into(),
+                    Type::F64 => self.load_array::<f64>(ptr as usize, len as usize)?.into(),
                     _ => unreachable!(),
                 }));
             }
@@ -1102,7 +1105,7 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
                 );
             }
             Instruction::CallInterface { func } => {
-                for _i in 0..func.results.len() {
+                for _i in 0..func.result.iter().count() {
                     results.push(Value::Bool(false));
                 }
 
@@ -1194,11 +1197,12 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
             Type::S16 => LITTLE_ENDIAN,
             Type::S32 => LITTLE_ENDIAN,
             Type::S64 => LITTLE_ENDIAN,
-            Type::Float32 => LITTLE_ENDIAN,
-            Type::Float64 => LITTLE_ENDIAN,
+            Type::F32 => LITTLE_ENDIAN,
+            Type::F64 => LITTLE_ENDIAN,
             Type::Char => false,
             Type::String => false,
             Type::Id(_) => false,
+            Type::ErrorContext => false,
         }
     }
 }

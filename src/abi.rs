@@ -16,6 +16,10 @@ fn join(a: WasmType, b: WasmType) -> WasmType {
         (I32, F32) | (F32, I32) => I32,
 
         (_, I64 | F64) | (I64 | F64, _) => I64,
+
+        (Pointer, _) | (_, Pointer) => Pointer,
+        (PointerOrI64, _) | (_, PointerOrI64) => PointerOrI64,
+        (Length, _) | (_, Length) => Length,
     }
 }
 
@@ -458,7 +462,7 @@ def_instruction! {
         /// Note that this will be used for async functions.
         CallInterface {
             func: &'a Function,
-        } : [func.params.len()] => [func.results.len()],
+        } : [func.params.len()] => [if func.result.is_some() { 1 } else { 0 }],
 
         /// Returns `amt` values on the stack. This is always the last
         /// instruction.
@@ -615,10 +619,12 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                     // ... otherwise if parameters are indirect space is
                     // allocated from them and each argument is lowered
                     // individually into memory.
-                    let (size, align) = self
+                    let element_info = self
                         .bindgen
                         .sizes()
                         .record(func.params.iter().map(|t| &t.1));
+                    let size = element_info.size.size_wasm32();
+                    let align = element_info.align.align_wasm32();
                     let ptr = match self.variant {
                         // When a wasm module calls an import it will provide
                         // space that isn't explicitly deallocated.
@@ -633,13 +639,19 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                             })?;
                             self.stack.pop().unwrap()
                         }
+                        // Async variants - not yet supported
+                        AbiVariant::GuestImportAsync
+                        | AbiVariant::GuestExportAsync
+                        | AbiVariant::GuestExportAsyncStackful => {
+                            unimplemented!("Async ABI variants are not yet supported")
+                        }
                     };
                     let mut offset = 0usize;
                     for (nth, (_, ty)) in func.params.iter().enumerate() {
                         self.emit(&Instruction::GetArg { nth })?;
-                        offset = align_to(offset, self.bindgen.sizes().align(ty));
+                        offset = align_to(offset, self.bindgen.sizes().align(ty).align_wasm32());
                         self.write_to_memory(ty, ptr.clone(), offset as i32)?;
-                        offset += self.bindgen.sizes().size(ty);
+                        offset += self.bindgen.sizes().size(ty).size_wasm32();
                     }
 
                     self.stack.push(ptr);
@@ -657,18 +669,18 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                     // With no return pointer in use we can simply lift the
                     // result(s) of the function from the result of the core
                     // wasm function.
-                    for ty in func.results.iter_types() {
+                    if let Some(ty) = &func.result {
                         self.lift(ty)?
                     }
                 } else {
                     let ptr = self.stack.pop().unwrap();
 
-                    self.read_results_from_memory(&func.results, ptr, 0)?;
+                    self.read_results_from_memory(&func.result, ptr, 0)?;
                 }
 
                 self.emit(&Instruction::Return {
                     func,
-                    amt: func.results.len(),
+                    amt: if func.result.is_some() { 1 } else { 0 },
                 })?;
             }
             LiftLower::LiftArgsLowerResults => {
@@ -695,9 +707,9 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                     self.emit(&Instruction::GetArg { nth: 0 })?;
                     let ptr = self.stack.pop().unwrap();
                     for (_, ty) in func.params.iter() {
-                        offset = align_to(offset, self.bindgen.sizes().align(ty));
+                        offset = align_to(offset, self.bindgen.sizes().align(ty).align_wasm32());
                         self.read_from_memory(ty, ptr.clone(), offset as i32)?;
-                        offset += self.bindgen.sizes().size(ty);
+                        offset += self.bindgen.sizes().size(ty).size_wasm32();
                     }
                 }
 
@@ -707,11 +719,8 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 if !sig.retptr {
                     // With no return pointer in use we simply lower the
                     // result(s) and return that directly from the function.
-                    let results = self
-                        .stack
-                        .drain(self.stack.len() - func.results.len()..)
-                        .collect::<Vec<_>>();
-                    for (ty, result) in func.results.iter_types().zip(results) {
+                    if let Some(ty) = &func.result {
+                        let result = self.stack.pop().unwrap();
                         self.stack.push(result);
                         self.lower(ty)?;
                     }
@@ -728,7 +737,9 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                                 nth: sig.params.len() - 1,
                             })?;
                             let ptr = self.stack.pop().unwrap();
-                            self.write_params_to_memory(func.results.iter_types(), ptr, 0)?;
+                            if let Some(ty) = &func.result {
+                                self.write_to_memory(ty, ptr, 0)?;
+                            }
                         }
 
                         // For a guest import this is a function defined in
@@ -738,6 +749,13 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                         // memory, returning the pointer at the end.
                         AbiVariant::GuestExport => {
                             unimplemented!()
+                        }
+
+                        // Async variants - not yet supported
+                        AbiVariant::GuestImportAsync
+                        | AbiVariant::GuestExportAsync
+                        | AbiVariant::GuestExportAsyncStackful => {
+                            unimplemented!("Async ABI variants are not yet supported")
                         }
                     }
                 }
@@ -812,11 +830,14 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             Type::S64 => self.emit(&I64FromS64),
             Type::U64 => self.emit(&I64FromU64),
             Type::Char => self.emit(&I32FromChar),
-            Type::Float32 => self.emit(&F32FromFloat32),
-            Type::Float64 => self.emit(&F64FromFloat64),
+            Type::F32 => self.emit(&F32FromFloat32),
+            Type::F64 => self.emit(&F64FromFloat64),
             Type::String => {
                 let realloc = self.list_realloc();
                 self.emit(&StringLower { realloc })
+            }
+            Type::ErrorContext => {
+                bail!("ErrorContext type is not yet supported")
             }
             Type::Id(id) => match &self.resolve.types[id].kind {
                 TypeDefKind::Type(t) => self.lower(t),
@@ -832,7 +853,7 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                         };
                         self.emit(&lower)?;
 
-                        let stride = self.bindgen.sizes().size(element) as i32;
+                        let stride = self.bindgen.sizes().size(element).size_wasm32() as i32;
                         let len = if let ListLower { len, .. } = lower {
                             len.get()
                         } else {
@@ -889,6 +910,7 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 TypeDefKind::Future(_) => todo!("lower future"),
                 TypeDefKind::Stream(_) => todo!("lower stream"),
                 TypeDefKind::Unknown => unreachable!(),
+                TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
             },
         }
     }
@@ -992,9 +1014,12 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             Type::S64 => self.emit(&S64FromI64),
             Type::U64 => self.emit(&U64FromI64),
             Type::Char => self.emit(&CharFromI32),
-            Type::Float32 => self.emit(&Float32FromF32),
-            Type::Float64 => self.emit(&Float64FromF64),
+            Type::F32 => self.emit(&Float32FromF32),
+            Type::F64 => self.emit(&Float64FromF64),
             Type::String => self.emit(&StringLift),
+            Type::ErrorContext => {
+                bail!("ErrorContext type is not yet supported")
+            }
             Type::Id(id) => match &self.resolve.types[id].kind {
                 TypeDefKind::Type(t) => self.lift(t),
                 TypeDefKind::List(element) => {
@@ -1012,7 +1037,7 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                         };
 
                         let addr = self.stack.pop().unwrap();
-                        let stride = self.bindgen.sizes().size(element) as i32;
+                        let stride = self.bindgen.sizes().size(element).size_wasm32() as i32;
 
                         for i in 0..len {
                             self.read_from_memory(element, addr.clone(), stride * i)?;
@@ -1112,6 +1137,7 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 TypeDefKind::Future(_) => todo!("lift future"),
                 TypeDefKind::Stream(_) => todo!("lift stream"),
                 TypeDefKind::Unknown => unreachable!(),
+                TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
             },
         }
     }
@@ -1190,9 +1216,12 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 self.lower_and_emit(ty, addr, &I32Store { offset })
             }
             Type::U64 | Type::S64 => self.lower_and_emit(ty, addr, &I64Store { offset }),
-            Type::Float32 => self.lower_and_emit(ty, addr, &F32Store { offset }),
-            Type::Float64 => self.lower_and_emit(ty, addr, &F64Store { offset }),
+            Type::F32 => self.lower_and_emit(ty, addr, &F32Store { offset }),
+            Type::F64 => self.lower_and_emit(ty, addr, &F64Store { offset }),
             Type::String => self.write_list_to_memory(ty, addr, offset),
+            Type::ErrorContext => {
+                bail!("ErrorContext type is not yet supported")
+            }
 
             Type::Id(id) => match &self.resolve.types[id].kind {
                 TypeDefKind::Type(t) => self.write_to_memory(t, addr, offset),
@@ -1269,11 +1298,13 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 TypeDefKind::Future(_) => todo!("write future to memory"),
                 TypeDefKind::Stream(_) => todo!("write stream to memory"),
                 TypeDefKind::Unknown => unreachable!(),
+                TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
             },
         }
     }
 
     /// Writes parameters to memory.
+    #[allow(dead_code)]
     fn write_params_to_memory<'b>(
         &mut self,
         params: impl IntoIterator<Item = &'b Type> + ExactSizeIterator,
@@ -1303,8 +1334,12 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 unreachable!()
             };
 
-        let payload_offset =
-            offset + (self.bindgen.sizes().payload_offset(tag, cases.clone()) as i32);
+        let payload_offset = offset
+            + (self
+                .bindgen
+                .sizes()
+                .payload_offset(tag, cases.clone())
+                .size_wasm32() as i32);
 
         let payload_name = self.stack.pop();
         self.emit(&Instruction::I32Const { val: discriminant })?;
@@ -1357,7 +1392,11 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             .zip(fields)
         {
             self.stack.push(op);
-            self.write_to_memory(ty, addr.clone(), offset + (field_offset as i32))?;
+            self.write_to_memory(
+                ty,
+                addr.clone(),
+                offset + (field_offset.size_wasm32() as i32),
+            )?;
         }
         Ok(())
     }
@@ -1381,9 +1420,10 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             Type::S16 => self.emit_and_lift(ty, addr, &I32Load16S { offset }),
             Type::U32 | Type::S32 | Type::Char => self.emit_and_lift(ty, addr, &I32Load { offset }),
             Type::U64 | Type::S64 => self.emit_and_lift(ty, addr, &I64Load { offset }),
-            Type::Float32 => self.emit_and_lift(ty, addr, &F32Load { offset }),
-            Type::Float64 => self.emit_and_lift(ty, addr, &F64Load { offset }),
+            Type::F32 => self.emit_and_lift(ty, addr, &F32Load { offset }),
+            Type::F64 => self.emit_and_lift(ty, addr, &F64Load { offset }),
             Type::String => self.read_list_from_memory(ty, addr, offset),
+            Type::ErrorContext => bail!("ErrorContext not yet supported"),
 
             Type::Id(id) => match &self.resolve.types[id].kind {
                 TypeDefKind::Type(t) => self.read_from_memory(t, addr, offset),
@@ -1489,6 +1529,7 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 TypeDefKind::Future(_) => todo!("read future from memory"),
                 TypeDefKind::Stream(_) => todo!("read stream from memory"),
                 TypeDefKind::Unknown => unreachable!(),
+                TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
             },
         }
     }
@@ -1496,11 +1537,15 @@ impl<'a, B: Bindgen> Generator<'a, B> {
     /// Reads results from memory.
     fn read_results_from_memory(
         &mut self,
-        results: &Results,
+        result: &Option<Type>,
         addr: B::Operand,
         offset: i32,
     ) -> Result<()> {
-        self.read_fields_from_memory(results.iter_types(), addr, offset)
+        if let Some(ty) = result {
+            self.read_from_memory(ty, addr, offset)
+        } else {
+            Ok(())
+        }
     }
 
     /// Reads a variant arm from memory.
@@ -1517,8 +1562,12 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             value: Cell::default(),
         };
         self.emit(&variant)?;
-        let payload_offset =
-            offset + (self.bindgen.sizes().payload_offset(tag, cases.clone()) as i32);
+        let payload_offset = offset
+            + (self
+                .bindgen
+                .sizes()
+                .payload_offset(tag, cases.clone())
+                .size_wasm32() as i32);
 
         if let Instruction::ReadI32 { value } = variant {
             let disc = value.get();
@@ -1558,7 +1607,11 @@ impl<'a, B: Bindgen> Generator<'a, B> {
         offset: i32,
     ) -> Result<()> {
         for (field_offset, ty) in self.bindgen.sizes().field_offsets(tys).iter() {
-            self.read_from_memory(ty, addr.clone(), offset + (*field_offset as i32))?;
+            self.read_from_memory(
+                ty,
+                addr.clone(),
+                offset + (field_offset.size_wasm32() as i32),
+            )?;
         }
         Ok(())
     }
@@ -1610,6 +1663,12 @@ fn cast(from: WasmType, to: WasmType) -> Bitcast {
         (I64, F32) => Bitcast::I64ToF32,
 
         (F32, F64) | (F64, F32) | (F64, I32) | (I32, F64) => unreachable!(),
+        (Pointer, _)
+        | (_, Pointer)
+        | (PointerOrI64, _)
+        | (_, PointerOrI64)
+        | (Length, _)
+        | (_, Length) => unreachable!(),
     }
 }
 
@@ -1624,10 +1683,11 @@ fn push_wasm(resolve: &Resolve, variant: AbiVariant, ty: &Type, result: &mut Vec
         | Type::S32
         | Type::U32
         | Type::Char => result.push(WasmType::I32),
+        Type::ErrorContext => result.push(WasmType::I32),
 
         Type::U64 | Type::S64 => result.push(WasmType::I64),
-        Type::Float32 => result.push(WasmType::F32),
-        Type::Float64 => result.push(WasmType::F64),
+        Type::F32 => result.push(WasmType::F32),
+        Type::F64 => result.push(WasmType::F64),
         Type::String => {
             result.push(WasmType::I32);
             result.push(WasmType::I32);
@@ -1696,6 +1756,10 @@ fn push_wasm(resolve: &Resolve, variant: AbiVariant, ty: &Type, result: &mut Vec
             }
 
             TypeDefKind::Unknown => unreachable!(),
+            TypeDefKind::FixedSizeList(_, _) => {
+                // Fixed size lists not yet supported - treat as error
+                result.push(WasmType::I32);
+            }
         },
     }
 }

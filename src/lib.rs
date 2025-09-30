@@ -114,6 +114,7 @@ use slab::*;
 pub use wasm_runtime_layer::Engine;
 use wasm_runtime_layer::*;
 use wasmtime_environ::component::*;
+use wasmtime_environ::ModuleTranslation as WasmtimeModuleTranslation;
 use wit_component::*;
 use wit_parser::*;
 
@@ -262,10 +263,7 @@ impl Component {
 
     /// Creates a mapping from module index to entities, used to resolve component exports at link-time.
     fn generate_export_mapping(
-        module_data: &wasmtime_environ::PrimaryMap<
-            StaticModuleIndex,
-            wasmtime_environ::ModuleTranslation,
-        >,
+        module_data: &wasmtime_environ::PrimaryMap<StaticModuleIndex, WasmtimeModuleTranslation>,
     ) -> FxHashMap<StaticModuleIndex, FxHashMap<wasmtime_environ::EntityIndex, String>> {
         let mut export_mapping =
             FxHashMap::with_capacity_and_hasher(module_data.len(), Default::default());
@@ -308,7 +306,7 @@ impl Component {
                         }
                     }
                 }
-                WorldItem::Interface(x) => {
+                WorldItem::Interface { id: x, .. } => {
                     for (name, ty) in &inner.resolve.interfaces[*x].types {
                         if inner.resolve.types[*ty].kind == TypeDefKind::Resource {
                             let ty = ResourceType::from_resolve(
@@ -358,7 +356,7 @@ impl Component {
                         }
                     }
                 }
-                WorldItem::Interface(x) => {
+                WorldItem::Interface { id: x, .. } => {
                     for (name, ty) in &inner.resolve.interfaces[*x].types {
                         if inner.resolve.types[*ty].kind == TypeDefKind::Resource {
                             let ty = ResourceType::from_resolve(
@@ -426,7 +424,7 @@ impl Component {
         types: &wasmtime_environ::component::ComponentTypes,
     ) -> Result<ComponentInner> {
         let lowering_options = Self::get_lowering_options_and_extract_trampolines(
-            &inner.translation.trampolines,
+            &inner.translation,
             &mut inner.generated_trampolines,
         )?;
         let mut imports = FxHashMap::default();
@@ -495,7 +493,7 @@ impl Component {
                                 options: lowering_opts.clone(),
                             }
                         }
-                        WorldItem::Interface(i) => {
+                        WorldItem::Interface { id: i, .. } => {
                             assert_eq!(path.len(), 1);
                             let iface = &inner.resolve.interfaces[*i];
                             let func = &iface.functions[&path[0]];
@@ -573,7 +571,7 @@ impl Component {
     /// Creates a mapping from lowered functions to trampoline data,
     /// and records any auxiliary trampolines in the map.
     fn get_lowering_options_and_extract_trampolines<'a>(
-        trampolines: &'a wasmtime_environ::PrimaryMap<TrampolineIndex, Trampoline>,
+        translation: &'a ComponentTranslation,
         output_trampolines: &mut FxHashMap<TrampolineIndex, GeneratedTrampoline>,
     ) -> Result<
         wasmtime_environ::PrimaryMap<
@@ -582,14 +580,15 @@ impl Component {
         >,
     > {
         let mut lowers = wasmtime_environ::PrimaryMap::default();
-        for (idx, trampoline) in trampolines {
+        for (idx, trampoline) in &translation.trampolines {
             match trampoline {
                 Trampoline::LowerImport {
                     index,
                     lower_ty,
                     options,
                 } => assert!(
-                    lowers.push((idx, options, *lower_ty)) == *index,
+                    lowers.push((idx, &translation.component.options[*options], *lower_ty))
+                        == *index,
                     "Indices did not match."
                 ),
                 Trampoline::ResourceNew(x) => {
@@ -613,22 +612,20 @@ impl Component {
         scope: &'a wasmtime_environ::ScopeVec<u8>,
     ) -> Result<(
         ComponentTranslation,
-        wasmtime_environ::PrimaryMap<StaticModuleIndex, wasmtime_environ::ModuleTranslation<'a>>,
+        wasmtime_environ::PrimaryMap<StaticModuleIndex, WasmtimeModuleTranslation<'a>>,
         wasmtime_environ::component::ComponentTypes,
     )> {
         let tunables = wasmtime_environ::Tunables::default_u32();
-        let mut types = ComponentTypesBuilder::default();
         let mut validator = Self::create_component_validator();
+        let mut types = ComponentTypesBuilder::new(&validator);
 
         let (translation, modules) = Translator::new(&tunables, &mut validator, &mut types, scope)
             .translate(bytes)
             .context("Could not translate input component to core WASM.")?;
 
-        Ok((
-            translation,
-            modules,
-            types.finish(&Default::default(), [], []).0,
-        ))
+        let component_types = types.finish(&translation.component).0;
+
+        Ok((translation, modules, component_types))
     }
 
     /// Fills in all of the exports for a component.
@@ -638,14 +635,15 @@ impl Component {
     ) -> Result<ComponentInner> {
         Self::export_names(&mut inner);
 
-        for (export_name, export) in &inner.translation.component.exports {
+        for (export_name, export_idx) in inner.translation.component.exports.raw_iter() {
             let world_key = &inner.export_names[export_name];
             let item = &inner.resolve.worlds[inner.world_id].exports[world_key];
+            let export = &inner.translation.component.export_items[*export_idx];
             match export {
                 wasmtime_environ::component::Export::LiftedFunction { ty, func, options } => {
                     let f = match item {
                         WorldItem::Function(f) => f,
-                        WorldItem::Interface(_) | WorldItem::Type(_) => unreachable!(),
+                        WorldItem::Interface { .. } | WorldItem::Type(_) => unreachable!(),
                     };
 
                     Self::update_resource_map(
@@ -677,7 +675,7 @@ impl Component {
                             .insert(
                                 export_name,
                                 ComponentExport {
-                                    options: options.clone(),
+                                    options: inner.translation.component.options[*options].clone(),
                                     def: match func {
                                         CoreDef::Export(x) => x.clone(),
                                         _ => unreachable!(),
@@ -692,10 +690,11 @@ impl Component {
                 }
                 wasmtime_environ::component::Export::Instance { exports, .. } => {
                     let id = match item {
-                        WorldItem::Interface(id) => *id,
+                        WorldItem::Interface { id, .. } => *id,
                         WorldItem::Function(_) | WorldItem::Type(_) => unreachable!(),
                     };
-                    for (func_name, export) in exports {
+                    for (func_name, export_idx) in exports.raw_iter() {
+                        let export = &inner.translation.component.export_items[*export_idx];
                         let (func, options, ty) = match export {
                             wasmtime_environ::component::Export::LiftedFunction {
                                 func,
@@ -716,7 +715,7 @@ impl Component {
                             &mut inner.resource_map,
                         );
                         let exp = ComponentExport {
-                            options: options.clone(),
+                            options: inner.translation.component.options[*options].clone(),
                             def: match func {
                                 CoreDef::Export(x) => x.clone(),
                                 _ => unreachable!(),
@@ -754,7 +753,7 @@ impl Component {
                 wasmtime_environ::component::Export::Type(_) => {}
 
                 // This can't be tested at this time so leave it unimplemented
-                wasmtime_environ::component::Export::ModuleStatic(_) => {
+                wasmtime_environ::component::Export::ModuleStatic { .. } => {
                     bail!("Not yet implemented.")
                 }
                 wasmtime_environ::component::Export::ModuleImport { .. } => {
@@ -791,7 +790,7 @@ impl Component {
             Self::connect_resources(resolve, types, ty, iface_ty, map);
         }
         let results_ty = &types[types[ty_func_idx].results];
-        for (ty, iface_ty) in func.results.iter_types().zip(results_ty.types.iter()) {
+        for (ty, iface_ty) in func.result.iter().zip(results_ty.types.iter()) {
             Self::connect_resources(resolve, types, ty, iface_ty, map);
         }
     }
@@ -829,9 +828,11 @@ impl Component {
             }
             (TypeDefKind::Variant(t1), InterfaceType::Variant(t2)) => {
                 let t2 = &types[*t2];
-                for (f1, f2) in t1.cases.iter().zip(t2.cases.iter()) {
+                for (f1, (_, f2_ty)) in t1.cases.iter().zip(t2.cases.iter()) {
                     if let Some(t1) = &f1.ty {
-                        Self::connect_resources(resolve, types, t1, f2.ty.as_ref().unwrap(), map);
+                        if let Some(f2) = f2_ty {
+                            Self::connect_resources(resolve, types, t1, f2, map);
+                        }
                     }
                 }
             }
@@ -1179,7 +1180,8 @@ impl Instance {
         let types = Self::generate_types(component, &map)?;
         let resource_tables = Mutex::new(vec![
             HandleTable::default();
-            component.0.translation.component.num_resource_tables
+            component.0.translation.component.num_resources
+                as usize
         ]);
 
         let instance = InstanceInner {
@@ -1404,18 +1406,27 @@ impl Instance {
         options: &CanonicalOptions,
         func: &Function,
     ) -> GuestInvokeOptions {
-        let memory = options.memory.map(|idx| {
-            Self::core_export(inner, &ctx, &inner.component.0.extracted_memories[&idx])
-                .expect("Could not get runtime memory export.")
-                .into_memory()
-                .expect("Export was not of memory type.")
-        });
-        let realloc = options.realloc.map(|idx| {
-            Self::core_export(inner, &ctx, &inner.component.0.extracted_reallocs[&idx])
-                .expect("Could not get runtime realloc export.")
-                .into_func()
-                .expect("Export was not of func type.")
-        });
+        let (memory, realloc) = match &options.data_model {
+            wasmtime_environ::component::CanonicalOptionsDataModel::LinearMemory(lm) => {
+                let memory = lm.memory.map(|idx| {
+                    Self::core_export(inner, &ctx, &inner.component.0.extracted_memories[&idx])
+                        .expect("Could not get runtime memory export.")
+                        .into_memory()
+                        .expect("Export was not of memory type.")
+                });
+                let realloc = lm.realloc.map(|idx| {
+                    Self::core_export(inner, &ctx, &inner.component.0.extracted_reallocs[&idx])
+                        .expect("Could not get runtime realloc export.")
+                        .into_func()
+                        .expect("Export was not of func type.")
+                });
+                (memory, realloc)
+            }
+            wasmtime_environ::component::CanonicalOptionsDataModel::Gc {} => {
+                // GC data model doesn't use memory or realloc
+                (None, None)
+            }
+        };
         let post_return = options.post_return.map(|idx| {
             Self::core_export(inner, &ctx, &inner.component.0.extracted_post_returns[&idx])
                 .expect("Could not get runtime post return export.")
@@ -1451,18 +1462,27 @@ impl Instance {
             .expect("Could not get callee export.")
             .into_func()
             .expect("Export was not of func type.");
-        let memory = options.memory.map(|idx| {
-            Self::core_export(inner, &ctx, &inner.component.0.extracted_memories[&idx])
-                .expect("Could not get runtime memory export.")
-                .into_memory()
-                .expect("Export was not of memory type.")
-        });
-        let realloc = options.realloc.map(|idx| {
-            Self::core_export(inner, &ctx, &inner.component.0.extracted_reallocs[&idx])
-                .expect("Could not get runtime realloc export.")
-                .into_func()
-                .expect("Export was not of func type.")
-        });
+        let (memory, realloc) = match &options.data_model {
+            wasmtime_environ::component::CanonicalOptionsDataModel::LinearMemory(lm) => {
+                let memory = lm.memory.map(|idx| {
+                    Self::core_export(inner, &ctx, &inner.component.0.extracted_memories[&idx])
+                        .expect("Could not get runtime memory export.")
+                        .into_memory()
+                        .expect("Export was not of memory type.")
+                });
+                let realloc = lm.realloc.map(|idx| {
+                    Self::core_export(inner, &ctx, &inner.component.0.extracted_reallocs[&idx])
+                        .expect("Could not get runtime realloc export.")
+                        .into_func()
+                        .expect("Export was not of func type.")
+                });
+                (memory, realloc)
+            }
+            wasmtime_environ::component::CanonicalOptionsDataModel::Gc {} => {
+                // GC data model doesn't use memory or realloc
+                (None, None)
+            }
+        };
         let post_return = options.post_return.map(|idx| {
             Self::core_export(inner, &ctx, &inner.component.0.extracted_post_returns[&idx])
                 .expect("Could not get runtime post return export.")

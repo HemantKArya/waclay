@@ -201,11 +201,12 @@ impl ValueType {
             wit_parser::Type::S16 => Self::S16,
             wit_parser::Type::S32 => Self::S32,
             wit_parser::Type::S64 => Self::S64,
-            wit_parser::Type::Float32 => Self::F32,
-            wit_parser::Type::Float64 => Self::F64,
+            wit_parser::Type::F32 => Self::F32,
+            wit_parser::Type::F64 => Self::F64,
             wit_parser::Type::Char => Self::Char,
             wit_parser::Type::String => Self::String,
             wit_parser::Type::Id(x) => Self::from_component_typedef(*x, component, resource_map)?,
+            &wit_parser::Type::ErrorContext => bail!("ErrorContext not yet supported"),
         })
     }
 
@@ -275,6 +276,9 @@ impl ValueType {
             wit_parser::TypeDefKind::Stream(_) => bail!("Unimplemented."),
             wit_parser::TypeDefKind::Type(x) => Self::from_component(x, component, resource_map)?,
             wit_parser::TypeDefKind::Unknown => unreachable!(),
+            wit_parser::TypeDefKind::FixedSizeList(_, _) => {
+                bail!("FixedSizeList not yet supported")
+            }
         })
     }
 }
@@ -1138,8 +1142,9 @@ impl FuncType {
         let len_params = params_results.len();
 
         for result in func
-            .results
-            .iter_types()
+            .result
+            .as_ref()
+            .into_iter()
             .map(|ty| ValueType::from_component(ty, component, resource_map))
         {
             params_results.push(result?);

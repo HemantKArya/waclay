@@ -18,10 +18,10 @@ ref-cast = { version = "1.0.24", default-features = false }
 semver = { version = "1.0.27", default-features = false }
 serde = { version = "1.0.227", optional = true, default-features = false, features = [ "derive", "rc" ] }
 slab = { version = "0.4.11", default-features = false }
-wasm_runtime_layer = { version = "0.6.0", default-features = false }      # to be upgraded in future
-wasmtime-environ = { version = "18.0.4", features = [ "component-model" ] } # to be upgraded in future
-wit-component = { version = "0.19.1", default-features = false }            # to be upgraded in future
-wit-parser = { version = "0.13.2", default-features = false }               # to be upgraded in future
+wasm_runtime_layer = { version = "0.6.0", default-features = false }
+wasmtime-environ = { version = "37.0.1", features = [ "component-model", "compile" ] }
+wit-component = { version = "0.239.0", default-features = false }
+wit-parser = { version = "0.239.0", default-features = false }
 
 [features]
 serde = [ "dep:serde", "semver/serde" ]
