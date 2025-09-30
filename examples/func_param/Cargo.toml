@@ -8,3 +8,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 wit-bindgen = "0.16.0"
+
+# Empty workspace to prevent this from being part of parent workspace
+[workspace]
