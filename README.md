@@ -78,17 +78,20 @@ pub fn main() {
 - Structural equality of component interface types, as mandated by the spec
 - Support for guest resources
 - Support for strongly-typed host resources with destructors
+- **NEW**: Host-side bindgen macro for generating typed bindings from WIT files (enable with `macro` feature)
 
 The following things have yet to be implemented:
 
 - String transcoders
-- A macro for generating host bindings
+- Complete bindgen implementation (records, variants, resources, etc.)
 - More comprehensive tests
 - Subtyping
 
 ## Optional features
 
 **serde** - Allows for the serialization of identifiers, types, and values. Note that serializing resources is not allowed, because resources may be tied to specific instances.
+
+**macro** - Enables the `bindgen!` macro for generating host-side bindings from WIT definitions. This provides a wasmtime-like API for interacting with components in a type-safe manner. See [docs/bindgen.md](docs/bindgen.md) for more information.
 
 ## Examples
 ```shell

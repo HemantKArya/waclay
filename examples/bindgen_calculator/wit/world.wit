@@ -1,0 +1,12 @@
+package example:calculator;
+
+world calculator {
+    import logger: interface {
+        log: func(message: string);
+        debug: func(value: s32);
+    }
+    
+    export add: func(a: s32, b: s32) -> s32;
+    export multiply: func(a: s32, b: s32) -> s32;
+    export divide: func(a: s32, b: s32) -> result<s32, string>;
+}
