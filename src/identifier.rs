@@ -161,7 +161,7 @@ impl TryFrom<&str> for PackageIdentifier {
         validate_id(name)?;
 
         let version = if let Some(idx) = version_index {
-            Some(semver::Version::parse(&id[(idx + 1)..])?)
+            Some(semver::Version::parse(&id[(idx + 1)..]).map_err(|e| anyhow::anyhow!("{}", e))?)
         } else {
             None
         };
@@ -254,7 +254,7 @@ impl TryFrom<&str> for InterfaceIdentifier {
         validate_id(interface_name)?;
 
         let version = if let Some(idx) = version_index {
-            Some(semver::Version::parse(&id[(idx + 1)..])?)
+            Some(semver::Version::parse(&id[(idx + 1)..]).map_err(|e| anyhow::anyhow!("{}", e))?)
         } else {
             None
         };

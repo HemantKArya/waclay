@@ -625,10 +625,12 @@ impl Component {
             .translate(bytes)
             .context("Could not translate input component to core WASM.")?;
 
+        let component_types = types.finish(&translation.component).0;
+
         Ok((
             translation,
             modules,
-            types.finish(&Default::default(), [], []).0,
+            component_types,
         ))
     }
 
@@ -639,9 +641,10 @@ impl Component {
     ) -> Result<ComponentInner> {
         Self::export_names(&mut inner);
 
-        for (export_name, export) in &inner.translation.component.exports {
+        for (export_name, export_idx) in inner.translation.component.exports.raw_iter() {
             let world_key = &inner.export_names[export_name];
             let item = &inner.resolve.worlds[inner.world_id].exports[world_key];
+            let export = &inner.translation.component.export_items[*export_idx];
             match export {
                 wasmtime_environ::component::Export::LiftedFunction { ty, func, options } => {
                     let f = match item {
@@ -653,7 +656,7 @@ impl Component {
                         &inner.resolve,
                         types,
                         f,
-                        *ty,
+                        ty,
                         &mut inner.resource_map,
                     );
 
@@ -696,7 +699,8 @@ impl Component {
                         WorldItem::Interface { id, .. } => *id,
                         WorldItem::Function(_) | WorldItem::Type(_) => unreachable!(),
                     };
-                    for (func_name, export) in exports {
+                    for (func_name, export_idx) in exports.raw_iter() {
+                        let export = &inner.translation.component.export_items[*export_idx];
                         let (func, options, ty) = match export {
                             wasmtime_environ::component::Export::LiftedFunction {
                                 func,
@@ -713,7 +717,7 @@ impl Component {
                             &inner.resolve,
                             types,
                             f,
-                            *ty,
+                            ty,
                             &mut inner.resource_map,
                         );
                         let exp = ComponentExport {
@@ -755,7 +759,7 @@ impl Component {
                 wasmtime_environ::component::Export::Type(_) => {}
 
                 // This can't be tested at this time so leave it unimplemented
-                wasmtime_environ::component::Export::ModuleStatic(_) => {
+                wasmtime_environ::component::Export::ModuleStatic { .. } => {
                     bail!("Not yet implemented.")
                 }
                 wasmtime_environ::component::Export::ModuleImport { .. } => {
@@ -1180,7 +1184,7 @@ impl Instance {
         let types = Self::generate_types(component, &map)?;
         let resource_tables = Mutex::new(vec![
             HandleTable::default();
-            component.0.translation.component.num_resource_tables
+            component.0.translation.component.num_resources as usize
         ]);
 
         let instance = InstanceInner {
@@ -1405,18 +1409,27 @@ impl Instance {
         options: &CanonicalOptions,
         func: &Function,
     ) -> GuestInvokeOptions {
-        let memory = options.memory.map(|idx| {
-            Self::core_export(inner, &ctx, &inner.component.0.extracted_memories[&idx])
-                .expect("Could not get runtime memory export.")
-                .into_memory()
-                .expect("Export was not of memory type.")
-        });
-        let realloc = options.realloc.map(|idx| {
-            Self::core_export(inner, &ctx, &inner.component.0.extracted_reallocs[&idx])
-                .expect("Could not get runtime realloc export.")
-                .into_func()
-                .expect("Export was not of func type.")
-        });
+        let (memory, realloc) = match &options.data_model {
+            wasmtime_environ::component::CanonicalOptionsDataModel::LinearMemory(lm) => {
+                let memory = lm.memory.map(|idx| {
+                    Self::core_export(inner, &ctx, &inner.component.0.extracted_memories[&idx])
+                        .expect("Could not get runtime memory export.")
+                        .into_memory()
+                        .expect("Export was not of memory type.")
+                });
+                let realloc = lm.realloc.map(|idx| {
+                    Self::core_export(inner, &ctx, &inner.component.0.extracted_reallocs[&idx])
+                        .expect("Could not get runtime realloc export.")
+                        .into_func()
+                        .expect("Export was not of func type.")
+                });
+                (memory, realloc)
+            }
+            wasmtime_environ::component::CanonicalOptionsDataModel::Gc {} => {
+                // GC data model doesn't use memory or realloc
+                (None, None)
+            }
+        };
         let post_return = options.post_return.map(|idx| {
             Self::core_export(inner, &ctx, &inner.component.0.extracted_post_returns[&idx])
                 .expect("Could not get runtime post return export.")
@@ -1452,18 +1465,27 @@ impl Instance {
             .expect("Could not get callee export.")
             .into_func()
             .expect("Export was not of func type.");
-        let memory = options.memory.map(|idx| {
-            Self::core_export(inner, &ctx, &inner.component.0.extracted_memories[&idx])
-                .expect("Could not get runtime memory export.")
-                .into_memory()
-                .expect("Export was not of memory type.")
-        });
-        let realloc = options.realloc.map(|idx| {
-            Self::core_export(inner, &ctx, &inner.component.0.extracted_reallocs[&idx])
-                .expect("Could not get runtime realloc export.")
-                .into_func()
-                .expect("Export was not of func type.")
-        });
+        let (memory, realloc) = match &options.data_model {
+            wasmtime_environ::component::CanonicalOptionsDataModel::LinearMemory(lm) => {
+                let memory = lm.memory.map(|idx| {
+                    Self::core_export(inner, &ctx, &inner.component.0.extracted_memories[&idx])
+                        .expect("Could not get runtime memory export.")
+                        .into_memory()
+                        .expect("Export was not of memory type.")
+                });
+                let realloc = lm.realloc.map(|idx| {
+                    Self::core_export(inner, &ctx, &inner.component.0.extracted_reallocs[&idx])
+                        .expect("Could not get runtime realloc export.")
+                        .into_func()
+                        .expect("Export was not of func type.")
+                });
+                (memory, realloc)
+            }
+            wasmtime_environ::component::CanonicalOptionsDataModel::Gc {} => {
+                // GC data model doesn't use memory or realloc
+                (None, None)
+            }
+        };
         let post_return = options.post_return.map(|idx| {
             Self::core_export(inner, &ctx, &inner.component.0.extracted_post_returns[&idx])
                 .expect("Could not get runtime post return export.")

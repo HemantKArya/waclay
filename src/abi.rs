@@ -635,6 +635,12 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                             })?;
                             self.stack.pop().unwrap()
                         }
+                        // Async variants - not yet supported
+                        AbiVariant::GuestImportAsync
+                        | AbiVariant::GuestExportAsync
+                        | AbiVariant::GuestExportAsyncStackful => {
+                            unimplemented!("Async ABI variants are not yet supported")
+                        }
                     };
                     let mut offset = 0usize;
                     for (nth, (_, ty)) in func.params.iter().enumerate() {
@@ -739,6 +745,13 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                         // memory, returning the pointer at the end.
                         AbiVariant::GuestExport => {
                             unimplemented!()
+                        }
+
+                        // Async variants - not yet supported
+                        AbiVariant::GuestImportAsync
+                        | AbiVariant::GuestExportAsync
+                        | AbiVariant::GuestExportAsyncStackful => {
+                            unimplemented!("Async ABI variants are not yet supported")
                         }
                     }
                 }
