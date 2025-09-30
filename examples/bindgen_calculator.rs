@@ -1,5 +1,7 @@
 //! Example showing the bindgen macro with a calculator world
 //!
+//! Run with: `cargo run --example bindgen_calculator --features macro`
+//!
 //! This demonstrates:
 //! - Generating bindings from WIT
 //! - Import interfaces
