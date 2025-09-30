@@ -13,7 +13,7 @@ mod source;
 mod types;
 
 pub use types::TypeInfo;
-use rust::{RustGenerator, TypeMode, to_rust_ident, to_rust_upper_camel_case};
+use rust::{TypeMode, to_rust_ident, to_rust_upper_camel_case};
 use source::Source;
 
 /// Configuration options for code generation
@@ -326,31 +326,6 @@ impl Generator {
         Ok(())
     }
 
-    fn generate_result_value_conversion(&mut self, result_type: &Type) -> Result<()> {
-        match result_type {
-            Type::Bool | Type::S8 | Type::U8 | Type::S16 | Type::U16 |
-            Type::S32 | Type::U32 | Type::S64 | Type::U64 |
-            Type::F32 | Type::F64 | Type::Char | Type::String => {
-                uwriteln!(self.src, "        Ok(vec![result.try_into()?])");
-            }
-            Type::Id(id) => {
-                let ty = &self.resolve.types[*id];
-                match &ty.kind {
-                    TypeDefKind::List(_) | TypeDefKind::Option(_) | TypeDefKind::Result(_) => {
-                        uwriteln!(self.src, "        Ok(vec![result.try_into()?])");
-                    }
-                    _ => {
-                        uwriteln!(self.src, "        Ok(vec![result.try_into()?])");
-                    }
-                }
-            }
-            _ => {
-                uwriteln!(self.src, "        Ok(vec![result.try_into()?])");
-            }
-        }
-        Ok(())
-    }
-
     fn generate_world_struct(&mut self) -> Result<()> {
         let world = &self.resolve.worlds[self.world];
         let world_name = to_rust_upper_camel_case(&world.name);
@@ -602,40 +577,10 @@ impl Generator {
 
         Ok(())
     }
-}
-
-impl RustGenerator for Generator {
-    fn resolve(&self) -> &Resolve {
-        &self.resolve
-    }
-
-    fn push_str(&mut self, s: &str) {
-        self.src.push_str(s);
-    }
-
-    fn info(&self, ty: TypeId) -> TypeInfo {
-        self.type_info.get(&ty).cloned().unwrap_or_default()
-    }
-
-    fn path_to_interface(&self, _interface: InterfaceId) -> Option<String> {
-        None
-    }
-
-    fn is_imported_interface(&self, interface: InterfaceId) -> bool {
-        self.interface_last_seen_as_import.get(&interface).copied().unwrap_or(false)
-    }
-
-    fn wasmtime_path(&self) -> String {
-        "wasm_component_layer".to_string()
-    }
-
-    fn ownership(&self) -> Ownership {
-        Ownership::Owning
-    }
     
     fn print_ty(&mut self, ty: &Type, mode: TypeMode) {
         let s = self.ty(ty, mode);
-        self.push_str(&s);
+        self.src.push_str(&s);
     }
     
     fn ty(&self, ty: &Type, mode: TypeMode) -> String {
@@ -653,10 +598,7 @@ impl RustGenerator for Generator {
             Type::F32 => "f32".to_string(),
             Type::F64 => "f64".to_string(),
             Type::Char => "char".to_string(),
-            Type::String => match mode {
-                TypeMode::AllBorrowed(_) => "&str".to_string(),
-                TypeMode::Owned => "String".to_string(),
-            },
+            Type::String => "String".to_string(),
             // Handle ErrorContext as a placeholder type
             _ => "()".to_string(),
         }
@@ -697,12 +639,6 @@ impl RustGenerator for Generator {
             _ => name.unwrap_or_else(|| "UnknownType".to_string()),
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Ownership {
-    Owning,
-    Borrowing,
 }
 
 macro_rules! uwrite {

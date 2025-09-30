@@ -1,31 +1,12 @@
 //! Rust code generation utilities
 
-use crate::{Ownership, types::TypeInfo};
 use heck::*;
-use wit_parser::*;
 
 /// Type mode for code generation
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TypeMode {
     /// Generate owning types
     Owned,
-    /// Generate borrowing types with lifetime
-    AllBorrowed(&'static str),
-}
-
-/// Trait for generating Rust code
-pub trait RustGenerator {
-    fn resolve(&self) -> &Resolve;
-    fn push_str(&mut self, s: &str);
-    fn info(&self, ty: TypeId) -> TypeInfo;
-    fn path_to_interface(&self, interface: InterfaceId) -> Option<String>;
-    fn is_imported_interface(&self, interface: InterfaceId) -> bool;
-    fn wasmtime_path(&self) -> String;
-    fn ownership(&self) -> Ownership;
-    
-    fn print_ty(&mut self, ty: &Type, mode: TypeMode);
-    fn ty(&self, ty: &Type, mode: TypeMode) -> String;
-    fn tyid(&self, id: TypeId, mode: TypeMode) -> String;
 }
 
 /// Convert a WIT identifier to a Rust identifier

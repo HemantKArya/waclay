@@ -4,6 +4,18 @@ members = [
     "crates/component-macro",
     "crates/bindgen",
 ]
+exclude = [
+    "examples/variant_return",
+    "examples/complex_return",
+    "examples/multilevel_resource",
+    "examples/single_component",
+    "examples/guest_resource",
+    "examples/resource",
+    "examples/func_param",
+    "examples/option_result",
+    "examples/record_response",
+    "examples/string_host_guest",
+]
 
 [package]
 name = "wasm_component_layer"

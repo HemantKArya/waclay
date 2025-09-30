@@ -12,10 +12,6 @@ impl Source {
     pub fn push_str(&mut self, s: &str) {
         self.s.push_str(s);
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.s
-    }
 }
 
 impl fmt::Display for Source {
