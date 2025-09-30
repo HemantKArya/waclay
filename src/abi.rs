@@ -16,6 +16,10 @@ fn join(a: WasmType, b: WasmType) -> WasmType {
         (I32, F32) | (F32, I32) => I32,
 
         (_, I64 | F64) | (I64 | F64, _) => I64,
+
+        (Pointer, _) | (_, Pointer) => Pointer,
+        (PointerOrI64, _) | (_, PointerOrI64) => PointerOrI64,
+        (Length, _) | (_, Length) => Length,
     }
 }
 
@@ -906,6 +910,7 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 TypeDefKind::Future(_) => todo!("lower future"),
                 TypeDefKind::Stream(_) => todo!("lower stream"),
                 TypeDefKind::Unknown => unreachable!(),
+                TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
             },
         }
     }
@@ -1132,6 +1137,7 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 TypeDefKind::Future(_) => todo!("lift future"),
                 TypeDefKind::Stream(_) => todo!("lift stream"),
                 TypeDefKind::Unknown => unreachable!(),
+                TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
             },
         }
     }
@@ -1292,11 +1298,13 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 TypeDefKind::Future(_) => todo!("write future to memory"),
                 TypeDefKind::Stream(_) => todo!("write stream to memory"),
                 TypeDefKind::Unknown => unreachable!(),
+                TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
             },
         }
     }
 
     /// Writes parameters to memory.
+    #[allow(dead_code)]
     fn write_params_to_memory<'b>(
         &mut self,
         params: impl IntoIterator<Item = &'b Type> + ExactSizeIterator,
@@ -1407,6 +1415,7 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             Type::F32 => self.emit_and_lift(ty, addr, &F32Load { offset }),
             Type::F64 => self.emit_and_lift(ty, addr, &F64Load { offset }),
             Type::String => self.read_list_from_memory(ty, addr, offset),
+            Type::ErrorContext => bail!("ErrorContext not yet supported"),
 
             Type::Id(id) => match &self.resolve.types[id].kind {
                 TypeDefKind::Type(t) => self.read_from_memory(t, addr, offset),
@@ -1512,6 +1521,7 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 TypeDefKind::Future(_) => todo!("read future from memory"),
                 TypeDefKind::Stream(_) => todo!("read stream from memory"),
                 TypeDefKind::Unknown => unreachable!(),
+                TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
             },
         }
     }
@@ -1637,6 +1647,7 @@ fn cast(from: WasmType, to: WasmType) -> Bitcast {
         (I64, F32) => Bitcast::I64ToF32,
 
         (F32, F64) | (F64, F32) | (F64, I32) | (I32, F64) => unreachable!(),
+        (Pointer, _) | (_, Pointer) | (PointerOrI64, _) | (_, PointerOrI64) | (Length, _) | (_, Length) => unreachable!(),
     }
 }
 
@@ -1651,7 +1662,7 @@ fn push_wasm(resolve: &Resolve, variant: AbiVariant, ty: &Type, result: &mut Vec
         | Type::S32
         | Type::U32
         | Type::Char => result.push(WasmType::I32),
-        Type::ErrorContext => bail!("ErrorContext type is not yet supported"),
+        Type::ErrorContext => result.push(WasmType::I32),
 
         Type::U64 | Type::S64 => result.push(WasmType::I64),
         Type::F32 => result.push(WasmType::F32),
@@ -1724,6 +1735,10 @@ fn push_wasm(resolve: &Resolve, variant: AbiVariant, ty: &Type, result: &mut Vec
             }
 
             TypeDefKind::Unknown => unreachable!(),
+            TypeDefKind::FixedSizeList(_, _) => {
+                // Fixed size lists not yet supported - treat as error
+                result.push(WasmType::I32);
+            }
         },
     }
 }

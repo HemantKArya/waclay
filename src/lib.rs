@@ -427,7 +427,7 @@ impl Component {
         types: &wasmtime_environ::component::ComponentTypes,
     ) -> Result<ComponentInner> {
         let lowering_options = Self::get_lowering_options_and_extract_trampolines(
-            &inner.translation.trampolines,
+            &inner.translation,
             &mut inner.generated_trampolines,
         )?;
         let mut imports = FxHashMap::default();
@@ -574,7 +574,7 @@ impl Component {
     /// Creates a mapping from lowered functions to trampoline data,
     /// and records any auxiliary trampolines in the map.
     fn get_lowering_options_and_extract_trampolines<'a>(
-        trampolines: &'a wasmtime_environ::PrimaryMap<TrampolineIndex, Trampoline>,
+        translation: &'a ComponentTranslation,
         output_trampolines: &mut FxHashMap<TrampolineIndex, GeneratedTrampoline>,
     ) -> Result<
         wasmtime_environ::PrimaryMap<
@@ -583,14 +583,14 @@ impl Component {
         >,
     > {
         let mut lowers = wasmtime_environ::PrimaryMap::default();
-        for (idx, trampoline) in trampolines {
+        for (idx, trampoline) in &translation.trampolines {
             match trampoline {
                 Trampoline::LowerImport {
                     index,
                     lower_ty,
                     options,
                 } => assert!(
-                    lowers.push((idx, options, *lower_ty)) == *index,
+                    lowers.push((idx, &translation.component.options[*options], *lower_ty)) == *index,
                     "Indices did not match."
                 ),
                 Trampoline::ResourceNew(x) => {
@@ -656,7 +656,7 @@ impl Component {
                         &inner.resolve,
                         types,
                         f,
-                        ty,
+                        *ty,
                         &mut inner.resource_map,
                     );
 
@@ -681,7 +681,7 @@ impl Component {
                             .insert(
                                 export_name,
                                 ComponentExport {
-                                    options: options.clone(),
+                                    options: inner.translation.component.options[*options].clone(),
                                     def: match func {
                                         CoreDef::Export(x) => x.clone(),
                                         _ => unreachable!(),
@@ -717,11 +717,11 @@ impl Component {
                             &inner.resolve,
                             types,
                             f,
-                            ty,
+                            *ty,
                             &mut inner.resource_map,
                         );
                         let exp = ComponentExport {
-                            options: options.clone(),
+                            options: inner.translation.component.options[*options].clone(),
                             def: match func {
                                 CoreDef::Export(x) => x.clone(),
                                 _ => unreachable!(),
@@ -834,9 +834,11 @@ impl Component {
             }
             (TypeDefKind::Variant(t1), InterfaceType::Variant(t2)) => {
                 let t2 = &types[*t2];
-                for (f1, f2) in t1.cases.iter().zip(t2.cases.iter()) {
+                for (f1, (_, f2_ty)) in t1.cases.iter().zip(t2.cases.iter()) {
                     if let Some(t1) = &f1.ty {
-                        Self::connect_resources(resolve, types, t1, f2.ty.as_ref().unwrap(), map);
+                        if let Some(f2) = f2_ty {
+                            Self::connect_resources(resolve, types, t1, f2, map);
+                        }
                     }
                 }
             }

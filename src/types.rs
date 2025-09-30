@@ -206,6 +206,7 @@ impl ValueType {
             wit_parser::Type::Char => Self::Char,
             wit_parser::Type::String => Self::String,
             wit_parser::Type::Id(x) => Self::from_component_typedef(*x, component, resource_map)?,
+            &wit_parser::Type::ErrorContext => bail!("ErrorContext not yet supported"),
         })
     }
 
@@ -275,6 +276,7 @@ impl ValueType {
             wit_parser::TypeDefKind::Stream(_) => bail!("Unimplemented."),
             wit_parser::TypeDefKind::Type(x) => Self::from_component(x, component, resource_map)?,
             wit_parser::TypeDefKind::Unknown => unreachable!(),
+            wit_parser::TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
         })
     }
 }

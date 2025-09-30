@@ -430,6 +430,7 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
                         WasmType::I64 => results.push(Value::S64(0)),
                         WasmType::F32 => results.push(Value::F32(0.0)),
                         WasmType::F64 => results.push(Value::F64(0.0)),
+                        WasmType::Pointer | WasmType::PointerOrI64 | WasmType::Length => results.push(Value::S32(0)),
                     }
                 }
             }
@@ -1199,6 +1200,7 @@ impl<'a, C: AsContextMut> Bindgen for FuncBindgen<'a, C> {
             Type::Char => false,
             Type::String => false,
             Type::Id(_) => false,
+            Type::ErrorContext => false,
         }
     }
 }
