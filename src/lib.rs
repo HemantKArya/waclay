@@ -137,6 +137,10 @@ pub use crate::values::{Enum, Flags, Record, Tuple, Value, Variant};
 #[cfg(feature = "macro")]
 pub use wasm_component_layer_macro::bindgen;
 
+// Re-export anyhow types that bindgen needs
+pub use anyhow::Result as AnyhowResult;
+pub use anyhow::Error as AnyhowError;
+
 /// A parsed and validated WebAssembly component, which may be used to instantiate [`Instance`]s.
 #[derive(Clone, Debug)]
 pub struct Component(Arc<ComponentInner>);

@@ -1111,7 +1111,7 @@ impl<_T: Send + 'static> {camel}Pre<_T> {{
         self.opts
             .wasmtime_crate
             .clone()
-            .unwrap_or("wasmtime".to_string())
+            .unwrap_or("wasm_component_layer".to_string())
     }
 }
 
