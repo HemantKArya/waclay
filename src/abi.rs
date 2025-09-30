@@ -832,6 +832,9 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 let realloc = self.list_realloc();
                 self.emit(&StringLower { realloc })
             }
+            Type::ErrorContext => {
+                bail!("ErrorContext type is not yet supported")
+            }
             Type::Id(id) => match &self.resolve.types[id].kind {
                 TypeDefKind::Type(t) => self.lower(t),
                 TypeDefKind::List(element) => {
@@ -1009,6 +1012,9 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             Type::F32 => self.emit(&Float32FromF32),
             Type::F64 => self.emit(&Float64FromF64),
             Type::String => self.emit(&StringLift),
+            Type::ErrorContext => {
+                bail!("ErrorContext type is not yet supported")
+            }
             Type::Id(id) => match &self.resolve.types[id].kind {
                 TypeDefKind::Type(t) => self.lift(t),
                 TypeDefKind::List(element) => {
@@ -1207,6 +1213,9 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             Type::F32 => self.lower_and_emit(ty, addr, &F32Store { offset }),
             Type::F64 => self.lower_and_emit(ty, addr, &F64Store { offset }),
             Type::String => self.write_list_to_memory(ty, addr, offset),
+            Type::ErrorContext => {
+                bail!("ErrorContext type is not yet supported")
+            }
 
             Type::Id(id) => match &self.resolve.types[id].kind {
                 TypeDefKind::Type(t) => self.write_to_memory(t, addr, offset),
@@ -1642,6 +1651,7 @@ fn push_wasm(resolve: &Resolve, variant: AbiVariant, ty: &Type, result: &mut Vec
         | Type::S32
         | Type::U32
         | Type::Char => result.push(WasmType::I32),
+        Type::ErrorContext => bail!("ErrorContext type is not yet supported"),
 
         Type::U64 | Type::S64 => result.push(WasmType::I64),
         Type::F32 => result.push(WasmType::F32),
