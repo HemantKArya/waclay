@@ -1,0 +1,6 @@
+package example:bindgen-host;
+
+world host-example {
+    import greeter: func(name: string) -> string;
+    export greet: func(name: string) -> string;
+}

@@ -77,12 +77,17 @@
 //! - Structural equality of component interface types, as mandated by the spec
 //! - Support for guest resources
 //! - Support for strongly-typed host resources with destructors
+//! - Host-side bindgen macro for generating typed interfaces (with `macro` feature)
 //!
 //! The following features have yet to be implemented:
 //!
-//! - A macro for generating host bindings
 //! - More comprehensive tests
 //! - Subtyping
+//!
+//! ## Optional Features
+//!
+//! - **serde**: Enables serialization support for types and values
+//! - **macro**: Enables the `bindgen!` macro for generating host-side bindings from WIT files
 
 /// Implements the Canonical ABI conventions for converting between guest and host types.
 mod abi;
@@ -127,6 +132,10 @@ pub use crate::types::*;
 pub use crate::types::{FuncType, ValueType, VariantCase};
 pub use crate::values::*;
 pub use crate::values::{Enum, Flags, Record, Tuple, Value, Variant};
+
+// Re-export the bindgen macro when the macro feature is enabled
+#[cfg(feature = "macro")]
+pub use wasm_component_layer_macro::bindgen;
 
 /// A parsed and validated WebAssembly component, which may be used to instantiate [`Instance`]s.
 #[derive(Clone, Debug)]
