@@ -5,7 +5,7 @@
 //! > Wasmtime repository to start a discussion about doing so, but otherwise
 //! > be aware that your usage of this crate is not supported.
 
-use crate::rust::{RustGenerator, TypeMode, to_rust_ident, to_rust_upper_camel_case};
+use crate::rust::{to_rust_ident, to_rust_upper_camel_case, RustGenerator, TypeMode};
 use crate::types::{TypeInfo, Types};
 use anyhow::bail;
 use heck::*;

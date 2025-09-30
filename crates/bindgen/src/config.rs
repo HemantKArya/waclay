@@ -1,4 +1,4 @@
-use crate::{LookupItem, lookup_keys};
+use crate::{lookup_keys, LookupItem};
 use anyhow::Result;
 use wit_parser::{Function, FunctionKind, Resolve, WorldKey};
 

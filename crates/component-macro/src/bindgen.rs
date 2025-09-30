@@ -1,12 +1,11 @@
 use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
 use std::collections::HashMap;
-use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering::Relaxed};
 use syn::parse::{Error, Parse, ParseStream, Result};
 use syn::punctuated::Punctuated;
-use syn::{Token, braced, token};
+use syn::{braced, token, Token};
 use wasm_component_layer_wit_bindgen::{
     FunctionConfig, FunctionFilter, FunctionFlags, Opts, Ownership, TrappableError,
 };
