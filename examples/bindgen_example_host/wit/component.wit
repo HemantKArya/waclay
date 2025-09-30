@@ -1,0 +1,15 @@
+package example:calculator;
+
+interface math {
+    add: func(a: s32, b: s32) -> s32;
+    multiply: func(a: s32, b: s32) -> s32;
+}
+
+interface logger {
+    log: func(message: string);
+}
+
+world calculator {
+    import logger;
+    export math;
+}
