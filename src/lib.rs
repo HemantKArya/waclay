@@ -263,10 +263,7 @@ impl Component {
 
     /// Creates a mapping from module index to entities, used to resolve component exports at link-time.
     fn generate_export_mapping(
-        module_data: &wasmtime_environ::PrimaryMap<
-            StaticModuleIndex,
-            WasmtimeModuleTranslation,
-        >,
+        module_data: &wasmtime_environ::PrimaryMap<StaticModuleIndex, WasmtimeModuleTranslation>,
     ) -> FxHashMap<StaticModuleIndex, FxHashMap<wasmtime_environ::EntityIndex, String>> {
         let mut export_mapping =
             FxHashMap::with_capacity_and_hasher(module_data.len(), Default::default());
@@ -590,7 +587,8 @@ impl Component {
                     lower_ty,
                     options,
                 } => assert!(
-                    lowers.push((idx, &translation.component.options[*options], *lower_ty)) == *index,
+                    lowers.push((idx, &translation.component.options[*options], *lower_ty))
+                        == *index,
                     "Indices did not match."
                 ),
                 Trampoline::ResourceNew(x) => {
@@ -627,11 +625,7 @@ impl Component {
 
         let component_types = types.finish(&translation.component).0;
 
-        Ok((
-            translation,
-            modules,
-            component_types,
-        ))
+        Ok((translation, modules, component_types))
     }
 
     /// Fills in all of the exports for a component.
@@ -1186,7 +1180,8 @@ impl Instance {
         let types = Self::generate_types(component, &map)?;
         let resource_tables = Mutex::new(vec![
             HandleTable::default();
-            component.0.translation.component.num_resources as usize
+            component.0.translation.component.num_resources
+                as usize
         ]);
 
         let instance = InstanceInner {

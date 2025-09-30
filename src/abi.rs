@@ -1334,8 +1334,12 @@ impl<'a, B: Bindgen> Generator<'a, B> {
                 unreachable!()
             };
 
-        let payload_offset =
-            offset + (self.bindgen.sizes().payload_offset(tag, cases.clone()).size_wasm32() as i32);
+        let payload_offset = offset
+            + (self
+                .bindgen
+                .sizes()
+                .payload_offset(tag, cases.clone())
+                .size_wasm32() as i32);
 
         let payload_name = self.stack.pop();
         self.emit(&Instruction::I32Const { val: discriminant })?;
@@ -1388,7 +1392,11 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             .zip(fields)
         {
             self.stack.push(op);
-            self.write_to_memory(ty, addr.clone(), offset + (field_offset.size_wasm32() as i32))?;
+            self.write_to_memory(
+                ty,
+                addr.clone(),
+                offset + (field_offset.size_wasm32() as i32),
+            )?;
         }
         Ok(())
     }
@@ -1554,8 +1562,12 @@ impl<'a, B: Bindgen> Generator<'a, B> {
             value: Cell::default(),
         };
         self.emit(&variant)?;
-        let payload_offset =
-            offset + (self.bindgen.sizes().payload_offset(tag, cases.clone()).size_wasm32() as i32);
+        let payload_offset = offset
+            + (self
+                .bindgen
+                .sizes()
+                .payload_offset(tag, cases.clone())
+                .size_wasm32() as i32);
 
         if let Instruction::ReadI32 { value } = variant {
             let disc = value.get();
@@ -1595,7 +1607,11 @@ impl<'a, B: Bindgen> Generator<'a, B> {
         offset: i32,
     ) -> Result<()> {
         for (field_offset, ty) in self.bindgen.sizes().field_offsets(tys).iter() {
-            self.read_from_memory(ty, addr.clone(), offset + (field_offset.size_wasm32() as i32))?;
+            self.read_from_memory(
+                ty,
+                addr.clone(),
+                offset + (field_offset.size_wasm32() as i32),
+            )?;
         }
         Ok(())
     }
@@ -1647,7 +1663,12 @@ fn cast(from: WasmType, to: WasmType) -> Bitcast {
         (I64, F32) => Bitcast::I64ToF32,
 
         (F32, F64) | (F64, F32) | (F64, I32) | (I32, F64) => unreachable!(),
-        (Pointer, _) | (_, Pointer) | (PointerOrI64, _) | (_, PointerOrI64) | (Length, _) | (_, Length) => unreachable!(),
+        (Pointer, _)
+        | (_, Pointer)
+        | (PointerOrI64, _)
+        | (_, PointerOrI64)
+        | (Length, _)
+        | (_, Length) => unreachable!(),
     }
 }
 

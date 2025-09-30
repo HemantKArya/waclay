@@ -276,7 +276,9 @@ impl ValueType {
             wit_parser::TypeDefKind::Stream(_) => bail!("Unimplemented."),
             wit_parser::TypeDefKind::Type(x) => Self::from_component(x, component, resource_map)?,
             wit_parser::TypeDefKind::Unknown => unreachable!(),
-            wit_parser::TypeDefKind::FixedSizeList(_, _) => bail!("FixedSizeList not yet supported"),
+            wit_parser::TypeDefKind::FixedSizeList(_, _) => {
+                bail!("FixedSizeList not yet supported")
+            }
         })
     }
 }
