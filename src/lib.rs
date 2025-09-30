@@ -114,6 +114,9 @@ use slab::*;
 pub use wasm_runtime_layer::Engine;
 use wasm_runtime_layer::*;
 use wasmtime_environ::component::*;
+use wasmtime_environ::component::translate::Translator;
+use wasmtime_environ::component::types_builder::ComponentTypesBuilder;
+use wasmtime_environ::ModuleTranslation as WasmtimeModuleTranslation;
 use wit_component::*;
 use wit_parser::*;
 
@@ -264,7 +267,7 @@ impl Component {
     fn generate_export_mapping(
         module_data: &wasmtime_environ::PrimaryMap<
             StaticModuleIndex,
-            wasmtime_environ::ModuleTranslation,
+            WasmtimeModuleTranslation,
         >,
     ) -> FxHashMap<StaticModuleIndex, FxHashMap<wasmtime_environ::EntityIndex, String>> {
         let mut export_mapping =
@@ -308,7 +311,7 @@ impl Component {
                         }
                     }
                 }
-                WorldItem::Interface(x) => {
+                WorldItem::Interface { id: x, .. } => {
                     for (name, ty) in &inner.resolve.interfaces[*x].types {
                         if inner.resolve.types[*ty].kind == TypeDefKind::Resource {
                             let ty = ResourceType::from_resolve(
@@ -358,7 +361,7 @@ impl Component {
                         }
                     }
                 }
-                WorldItem::Interface(x) => {
+                WorldItem::Interface { id: x, .. } => {
                     for (name, ty) in &inner.resolve.interfaces[*x].types {
                         if inner.resolve.types[*ty].kind == TypeDefKind::Resource {
                             let ty = ResourceType::from_resolve(
@@ -495,7 +498,7 @@ impl Component {
                                 options: lowering_opts.clone(),
                             }
                         }
-                        WorldItem::Interface(i) => {
+                        WorldItem::Interface { id: i, .. } => {
                             assert_eq!(path.len(), 1);
                             let iface = &inner.resolve.interfaces[*i];
                             let func = &iface.functions[&path[0]];
@@ -613,7 +616,7 @@ impl Component {
         scope: &'a wasmtime_environ::ScopeVec<u8>,
     ) -> Result<(
         ComponentTranslation,
-        wasmtime_environ::PrimaryMap<StaticModuleIndex, wasmtime_environ::ModuleTranslation<'a>>,
+        wasmtime_environ::PrimaryMap<StaticModuleIndex, WasmtimeModuleTranslation<'a>>,
         wasmtime_environ::component::ComponentTypes,
     )> {
         let tunables = wasmtime_environ::Tunables::default_u32();
@@ -645,7 +648,7 @@ impl Component {
                 wasmtime_environ::component::Export::LiftedFunction { ty, func, options } => {
                     let f = match item {
                         WorldItem::Function(f) => f,
-                        WorldItem::Interface(_) | WorldItem::Type(_) => unreachable!(),
+                        WorldItem::Interface { .. } | WorldItem::Type(_) => unreachable!(),
                     };
 
                     Self::update_resource_map(
@@ -692,7 +695,7 @@ impl Component {
                 }
                 wasmtime_environ::component::Export::Instance { exports, .. } => {
                     let id = match item {
-                        WorldItem::Interface(id) => *id,
+                        WorldItem::Interface { id, .. } => *id,
                         WorldItem::Function(_) | WorldItem::Type(_) => unreachable!(),
                     };
                     for (func_name, export) in exports {
