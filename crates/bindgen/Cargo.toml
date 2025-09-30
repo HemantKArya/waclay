@@ -1,9 +1,9 @@
 [package]
-name = "wasm_component_layer_bindgen"
+name = "wasm_component_layer_wit_bindgen"
 version = "0.1.3"
 edition = "2021"
 license = "Apache-2.0"
-description = "Code generation for wasm_component_layer host bindings"
+description = "WIT bindgen support for wasm_component_layer"
 repository = "https://github.com/HemantKArya/wcomp_layer"
 
 [dependencies]
@@ -11,3 +11,4 @@ anyhow = "1.0"
 heck = "0.5"
 wit-parser = "0.239.0"
 indexmap = "2.0"
+bitflags = "2.4"

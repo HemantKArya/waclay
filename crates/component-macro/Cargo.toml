@@ -14,5 +14,7 @@ proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["full", "extra-traits"] }
 anyhow = "1.0"
-wasm_component_layer_bindgen = { path = "../bindgen" }
+wasm_component_layer_wit_bindgen = { path = "../bindgen" }
+wasm_component_layer_util = { path = "../component-util" }
 wit-parser = "0.239.0"
+heck = "0.5"

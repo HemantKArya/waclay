@@ -1,8 +1,9 @@
 [workspace]
 members = [
     ".",
-    "crates/component-macro",
     "crates/bindgen",
+    "crates/component-macro",
+    "crates/component-util",
 ]
 exclude = [
     "examples/variant_return",

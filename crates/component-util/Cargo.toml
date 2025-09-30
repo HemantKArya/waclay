@@ -1,0 +1,9 @@
+[package]
+name = "wasm_component_layer_util"
+version = "0.1.3"
+edition = "2021"
+license = "Apache-2.0"
+description = "Utility functions for wasm_component_layer"
+repository = "https://github.com/HemantKArya/wcomp_layer"
+
+[dependencies]
