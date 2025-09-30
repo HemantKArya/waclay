@@ -58,9 +58,11 @@ impl Generator {
 
     fn generate(&mut self) -> Result<String> {
         self.analyze_types();
+        self.generate_type_definitions()?;
         self.generate_world_struct()?;
         self.generate_imports()?;
         self.generate_exports()?;
+        self.generate_add_to_linker()?;
         
         Ok(self.src.to_string())
     }
@@ -156,6 +158,199 @@ impl Generator {
         }
     }
 
+    fn generate_type_definitions(&mut self) -> Result<()> {
+        // Collect all type definitions that need to be generated
+        let mut type_ids: Vec<TypeId> = Vec::new();
+        
+        for (id, ty) in self.resolve.types.iter() {
+            if ty.name.is_some() && matches!(ty.kind, 
+                TypeDefKind::Record(_) | TypeDefKind::Variant(_) | 
+                TypeDefKind::Enum(_) | TypeDefKind::Flags(_)) {
+                type_ids.push(id);
+            }
+        }
+
+        // Generate type definitions
+        for id in type_ids {
+            self.generate_type_definition(id)?;
+        }
+
+        Ok(())
+    }
+
+    fn generate_type_definition(&mut self, id: TypeId) -> Result<()> {
+        let ty = &self.resolve.types[id];
+        let name = ty.name.as_ref().unwrap().clone();
+        let kind = ty.kind.clone();
+        
+        match &kind {
+            TypeDefKind::Record(r) => self.generate_record(&name, r)?,
+            TypeDefKind::Variant(v) => self.generate_variant(&name, v)?,
+            TypeDefKind::Enum(e) => self.generate_enum(&name, e)?,
+            TypeDefKind::Flags(f) => self.generate_flags(&name, f)?,
+            _ => {}
+        }
+
+        Ok(())
+    }
+
+    fn generate_record(&mut self, name: &str, record: &Record) -> Result<()> {
+        let type_name = to_rust_upper_camel_case(name);
+        
+        uwriteln!(self.src, "#[derive(Debug, Clone, PartialEq)]");
+        uwriteln!(self.src, "pub struct {} {{", type_name);
+        
+        for field in &record.fields {
+            let field_name = to_rust_ident(&field.name);
+            uwrite!(self.src, "    pub {}: ", field_name);
+            self.print_ty(&field.ty, TypeMode::Owned);
+            uwriteln!(self.src, ",");
+        }
+        
+        uwriteln!(self.src, "}}");
+        uwriteln!(self.src, "");
+        
+        Ok(())
+    }
+
+    fn generate_variant(&mut self, name: &str, variant: &Variant) -> Result<()> {
+        let type_name = to_rust_upper_camel_case(name);
+        
+        uwriteln!(self.src, "#[derive(Debug, Clone, PartialEq)]");
+        uwriteln!(self.src, "pub enum {} {{", type_name);
+        
+        for case in &variant.cases {
+            let case_name = to_rust_upper_camel_case(&case.name);
+            if let Some(ty) = &case.ty {
+                uwrite!(self.src, "    {}(", case_name);
+                self.print_ty(ty, TypeMode::Owned);
+                uwriteln!(self.src, "),");
+            } else {
+                uwriteln!(self.src, "    {},", case_name);
+            }
+        }
+        
+        uwriteln!(self.src, "}}");
+        uwriteln!(self.src, "");
+        
+        Ok(())
+    }
+
+    fn generate_enum(&mut self, name: &str, enum_: &Enum) -> Result<()> {
+        let type_name = to_rust_upper_camel_case(name);
+        
+        uwriteln!(self.src, "#[derive(Debug, Clone, Copy, PartialEq, Eq)]");
+        uwriteln!(self.src, "pub enum {} {{", type_name);
+        
+        for case in &enum_.cases {
+            let case_name = to_rust_upper_camel_case(&case.name);
+            uwriteln!(self.src, "    {},", case_name);
+        }
+        
+        uwriteln!(self.src, "}}");
+        uwriteln!(self.src, "");
+        
+        Ok(())
+    }
+
+    fn generate_flags(&mut self, name: &str, flags: &Flags) -> Result<()> {
+        let type_name = to_rust_upper_camel_case(name);
+        
+        uwriteln!(self.src, "#[derive(Debug, Clone, Copy, PartialEq, Eq)]");
+        uwriteln!(self.src, "pub struct {} {{", type_name);
+        uwriteln!(self.src, "    bits: u32,");
+        uwriteln!(self.src, "}}");
+        uwriteln!(self.src, "");
+        
+        uwriteln!(self.src, "impl {} {{", type_name);
+        
+        for (i, flag) in flags.flags.iter().enumerate() {
+            let flag_name = to_rust_ident(&flag.name).to_uppercase();
+            uwriteln!(self.src, "    pub const {}: Self = Self {{ bits: 1 << {} }};", flag_name, i);
+        }
+        
+        uwriteln!(self.src, "");
+        uwriteln!(self.src, "    pub const fn empty() -> Self {{");
+        uwriteln!(self.src, "        Self {{ bits: 0 }}");
+        uwriteln!(self.src, "    }}");
+        uwriteln!(self.src, "");
+        uwriteln!(self.src, "    pub const fn all() -> Self {{");
+        let all_bits = (1u32 << flags.flags.len()) - 1;
+        uwriteln!(self.src, "        Self {{ bits: {} }}", all_bits);
+        uwriteln!(self.src, "    }}");
+        uwriteln!(self.src, "");
+        uwriteln!(self.src, "    pub const fn contains(&self, other: Self) -> bool {{");
+        uwriteln!(self.src, "        (self.bits & other.bits) == other.bits");
+        uwriteln!(self.src, "    }}");
+        uwriteln!(self.src, "");
+        uwriteln!(self.src, "    pub const fn insert(&mut self, other: Self) {{");
+        uwriteln!(self.src, "        self.bits |= other.bits;");
+        uwriteln!(self.src, "    }}");
+        uwriteln!(self.src, "");
+        uwriteln!(self.src, "    pub const fn remove(&mut self, other: Self) {{");
+        uwriteln!(self.src, "        self.bits &= !other.bits;");
+        uwriteln!(self.src, "    }}");
+        uwriteln!(self.src, "}}");
+        uwriteln!(self.src, "");
+        
+        Ok(())
+    }
+
+    fn generate_value_conversion(&mut self, param_name: &str, param_type: &Type) -> Result<()> {
+        let ident = to_rust_ident(param_name);
+        match param_type {
+            Type::Bool => uwrite!(self.src, "wasm_component_layer::Value::Bool({})", ident),
+            Type::S8 => uwrite!(self.src, "wasm_component_layer::Value::S8({})", ident),
+            Type::U8 => uwrite!(self.src, "wasm_component_layer::Value::U8({})", ident),
+            Type::S16 => uwrite!(self.src, "wasm_component_layer::Value::S16({})", ident),
+            Type::U16 => uwrite!(self.src, "wasm_component_layer::Value::U16({})", ident),
+            Type::S32 => uwrite!(self.src, "wasm_component_layer::Value::S32({})", ident),
+            Type::U32 => uwrite!(self.src, "wasm_component_layer::Value::U32({})", ident),
+            Type::S64 => uwrite!(self.src, "wasm_component_layer::Value::S64({})", ident),
+            Type::U64 => uwrite!(self.src, "wasm_component_layer::Value::U64({})", ident),
+            Type::F32 => uwrite!(self.src, "wasm_component_layer::Value::F32({})", ident),
+            Type::F64 => uwrite!(self.src, "wasm_component_layer::Value::F64({})", ident),
+            Type::Char => uwrite!(self.src, "wasm_component_layer::Value::Char({})", ident),
+            Type::String => uwrite!(self.src, "wasm_component_layer::Value::String({}.into())", ident),
+            Type::Id(id) => {
+                let ty = &self.resolve.types[*id];
+                match &ty.kind {
+                    TypeDefKind::List(_) => uwrite!(self.src, "wasm_component_layer::Value::List({}.into())", ident),
+                    TypeDefKind::Option(_) => uwrite!(self.src, "wasm_component_layer::Value::Option({}.into())", ident),
+                    TypeDefKind::Result(_) => uwrite!(self.src, "wasm_component_layer::Value::Result({}.into())", ident),
+                    _ => uwrite!(self.src, "{}.try_into()?", ident),
+                }
+            }
+            _ => uwrite!(self.src, "{}.try_into()?", ident),
+        }
+        Ok(())
+    }
+
+    fn generate_result_value_conversion(&mut self, result_type: &Type) -> Result<()> {
+        match result_type {
+            Type::Bool | Type::S8 | Type::U8 | Type::S16 | Type::U16 |
+            Type::S32 | Type::U32 | Type::S64 | Type::U64 |
+            Type::F32 | Type::F64 | Type::Char | Type::String => {
+                uwriteln!(self.src, "        Ok(vec![result.try_into()?])");
+            }
+            Type::Id(id) => {
+                let ty = &self.resolve.types[*id];
+                match &ty.kind {
+                    TypeDefKind::List(_) | TypeDefKind::Option(_) | TypeDefKind::Result(_) => {
+                        uwriteln!(self.src, "        Ok(vec![result.try_into()?])");
+                    }
+                    _ => {
+                        uwriteln!(self.src, "        Ok(vec![result.try_into()?])");
+                    }
+                }
+            }
+            _ => {
+                uwriteln!(self.src, "        Ok(vec![result.try_into()?])");
+            }
+        }
+        Ok(())
+    }
+
     fn generate_world_struct(&mut self) -> Result<()> {
         let world = &self.resolve.worlds[self.world];
         let world_name = to_rust_upper_camel_case(&world.name);
@@ -231,8 +426,43 @@ impl Generator {
         Ok(())
     }
 
-    fn generate_import_interface(&mut self, _name: &WorldKey, _id: InterfaceId) -> Result<()> {
-        // TODO: Implement interface imports
+    fn generate_import_interface(&mut self, name: &WorldKey, id: InterfaceId) -> Result<()> {
+        let iface = &self.resolve.interfaces[id];
+        let interface_name = match name {
+            WorldKey::Name(s) => to_rust_upper_camel_case(s),
+            WorldKey::Interface(_) => {
+                if let Some(n) = &iface.name {
+                    to_rust_upper_camel_case(n)
+                } else {
+                    "UnnamedInterface".to_string()
+                }
+            }
+        };
+
+        // Generate trait for the interface
+        uwriteln!(self.src, "    /// Interface: {}", interface_name);
+        
+        // Collect functions from the interface
+        let functions: Vec<_> = iface.functions.values().cloned().collect();
+        
+        for func in functions {
+            uwrite!(self.src, "    fn {}(", to_rust_ident(&func.name));
+            uwrite!(self.src, "&mut self");
+            
+            for (param_name, param_type) in func.params.iter() {
+                uwrite!(self.src, ", {}: ", to_rust_ident(param_name));
+                self.print_ty(param_type, TypeMode::Owned);
+            }
+            
+            uwrite!(self.src, ") -> anyhow::Result<");
+            if let Some(result_ty) = &func.result {
+                self.print_ty(result_ty, TypeMode::Owned);
+            } else {
+                uwrite!(self.src, "()");
+            }
+            uwriteln!(self.src, ">;");
+        }
+
         Ok(())
     }
 
@@ -276,7 +506,7 @@ impl Generator {
         let world_name = to_rust_upper_camel_case(&world.name);
 
         uwriteln!(self.src, "impl {} {{", world_name);
-        uwrite!(self.src, "    pub fn {}(&self", func_name);
+        uwrite!(self.src, "    pub fn {}(&self, store: &mut impl wasm_component_layer::AsContextMut", func_name);
 
         for (param_name, param_type) in func.params.iter() {
             uwrite!(self.src, ", {}: ", to_rust_ident(param_name));
@@ -290,8 +520,39 @@ impl Generator {
             uwrite!(self.src, "()");
         }
         uwriteln!(self.src, "> {{");
-        uwriteln!(self.src, "        // TODO: Implement export function call");
-        uwriteln!(self.src, "        unimplemented!()");
+        
+        // Generate actual implementation
+        uwriteln!(self.src, "        let exports = self.instance.exports();");
+        uwriteln!(self.src, "        let root = exports.root();");
+        uwriteln!(self.src, "        let func = root.func(\"{}\").ok_or_else(|| anyhow::anyhow!(\"function not found\"))?;", func.name);
+        
+        // Build parameters
+        if func.params.is_empty() {
+            uwriteln!(self.src, "        let params = vec![];");
+        } else {
+            uwriteln!(self.src, "        let params = vec![");
+            for (i, (param_name, param_type)) in func.params.iter().enumerate() {
+                if i > 0 {
+                    uwriteln!(self.src, ",");
+                }
+                uwrite!(self.src, "            ");
+                self.generate_value_conversion(param_name, param_type)?;
+            }
+            uwriteln!(self.src, "");
+            uwriteln!(self.src, "        ];");
+        }
+        
+        // Call function
+        if func.result.is_some() {
+            uwriteln!(self.src, "        let mut results = vec![wasm_component_layer::Value::Bool(false)];");
+            uwriteln!(self.src, "        func.call(store, &params, &mut results)?;");
+            uwriteln!(self.src, "        wasm_component_layer::ComponentType::from_value(&results[0])");
+        } else {
+            uwriteln!(self.src, "        let mut results = vec![];");
+            uwriteln!(self.src, "        func.call(store, &params, &mut results)?;");
+            uwriteln!(self.src, "        Ok(())");
+        }
+        
         uwriteln!(self.src, "    }}");
         uwriteln!(self.src, "}}");
         uwriteln!(self.src, "");
@@ -299,8 +560,46 @@ impl Generator {
         Ok(())
     }
 
-    fn generate_export_interface(&mut self, _name: &WorldKey, _id: InterfaceId) -> Result<()> {
-        // TODO: Implement interface exports
+    fn generate_export_interface(&mut self, name: &WorldKey, id: InterfaceId) -> Result<()> {
+        let iface = &self.resolve.interfaces[id];
+        let interface_name = match name {
+            WorldKey::Name(s) => to_rust_upper_camel_case(s),
+            WorldKey::Interface(_) => {
+                if let Some(n) = &iface.name {
+                    to_rust_upper_camel_case(n)
+                } else {
+                    "UnnamedInterface".to_string()
+                }
+            }
+        };
+
+        // Generate a simple comment noting this is an interface
+        uwriteln!(self.src, "// Interface export: {}", interface_name);
+        uwriteln!(self.src, "// TODO: Implement interface '{}' export methods", interface_name);
+        uwriteln!(self.src, "");
+
+        Ok(())
+    }
+
+    fn generate_add_to_linker(&mut self) -> Result<()> {
+        let world = &self.resolve.worlds[self.world];
+        
+        // Only generate if there are imports
+        if world.imports.is_empty() {
+            return Ok(());
+        }
+        
+        uwriteln!(self.src, "/// Helper function to add all imports to a linker");
+        uwriteln!(self.src, "/// Note: This is a simplified implementation - you may need to adapt it to your use case");
+        uwriteln!(self.src, "pub fn add_to_linker<T: HostImports + 'static>(");
+        uwriteln!(self.src, "    _linker: &mut wasm_component_layer::Linker,");
+        uwriteln!(self.src, ") -> anyhow::Result<()> {{");
+        uwriteln!(self.src, "    // TODO: Implement linker binding");
+        uwriteln!(self.src, "    // You need to define functions in the linker that call your HostImports trait methods");
+        uwriteln!(self.src, "    Ok(())");
+        uwriteln!(self.src, "}}");
+        uwriteln!(self.src, "");
+
         Ok(())
     }
 }
