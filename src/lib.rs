@@ -114,8 +114,6 @@ use slab::*;
 pub use wasm_runtime_layer::Engine;
 use wasm_runtime_layer::*;
 use wasmtime_environ::component::*;
-use wasmtime_environ::component::translate::Translator;
-use wasmtime_environ::component::types_builder::ComponentTypesBuilder;
 use wasmtime_environ::ModuleTranslation as WasmtimeModuleTranslation;
 use wit_component::*;
 use wit_parser::*;
