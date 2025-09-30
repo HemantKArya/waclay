@@ -183,11 +183,13 @@ impl Parse for Config {
 }
 
 fn parse_source(
-    paths: &Vec<String>,
+    paths: &[String],
     inline: &Option<String>,
 ) -> anyhow::Result<(Resolve, Vec<PackageId>, Vec<PathBuf>)> {
-    let mut resolve = Resolve::default();
-    resolve.all_features = true;
+    let mut resolve = Resolve {
+        all_features: true,
+        ..Default::default()
+    };
     let mut files = Vec::new();
     let mut pkgs = Vec::new();
     let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());

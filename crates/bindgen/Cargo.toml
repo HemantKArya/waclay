@@ -12,3 +12,7 @@ heck = "0.5"
 wit-parser = "0.239.0"
 indexmap = "2.0"
 bitflags = "2.4"
+
+[features]
+async = []
+component-model-async = []

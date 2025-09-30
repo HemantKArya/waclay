@@ -305,9 +305,7 @@ impl Wasmtime {
         // a simpler path is chosen to generate "foo0_1_0" and "foo0_2_0".
         let version = version
             .to_string()
-            .replace('.', "_")
-            .replace('-', "_")
-            .replace('+', "_")
+            .replace(['.', '-', '+'], "_")
             .to_snake_case();
         format!("{base}{version}")
     }
@@ -732,7 +730,7 @@ pub fn new<_T>(
     fn build_world_struct(&mut self, resolve: &Resolve, world: WorldId) {
         let wt = self.wasmtime_path();
         let world_name = &resolve.worlds[world].name;
-        let camel = to_rust_upper_camel_case(&world_name);
+        let camel = to_rust_upper_camel_case(world_name);
         uwriteln!(
             self.src,
             "
@@ -1193,7 +1191,7 @@ fn lookup_keys(
         fn lookup_key(&self, resolve: &Resolve) -> String {
             let mut s = self.prefix.lookup_key(resolve);
             if let Some(item) = self.item {
-                s.push_str("/");
+                s.push('/');
                 s.push_str(item);
             }
             s
@@ -2198,7 +2196,7 @@ impl<'a> InterfaceGenerator<'a> {
         self.push_str(" = ");
         self.print_stream(ty);
         self.push_str(";\n");
-        self.assert_type(id, &name);
+        self.assert_type(id, name);
     }
 
     fn type_future(&mut self, id: TypeId, name: &str, ty: Option<&Type>, docs: &Docs) {
@@ -2208,7 +2206,7 @@ impl<'a> InterfaceGenerator<'a> {
         self.push_str(" = ");
         self.print_future(ty);
         self.push_str(";\n");
-        self.assert_type(id, &name);
+        self.assert_type(id, name);
     }
 
     fn print_result_ty(&mut self, result: Option<Type>, mode: TypeMode) {
@@ -2236,7 +2234,7 @@ impl<'a> InterfaceGenerator<'a> {
             _ => return None,
         };
         let error_typeid = match result.err? {
-            Type::Id(id) => resolve_type_definition_id(&self.resolve, id),
+            Type::Id(id) => resolve_type_definition_id(self.resolve, id),
             _ => return None,
         };
 
@@ -2487,11 +2485,11 @@ impl<'a> InterfaceGenerator<'a> {
                 .iter()
                 .enumerate()
                 .map(|(i, (name, ty))| {
-                    let name = to_rust_ident(&name);
-                    formatting_for_arg(&name, i, *ty, &self.resolve, flags)
+                    let name = to_rust_ident(name);
+                    formatting_for_arg(&name, i, *ty, self.resolve, flags)
                 })
                 .collect::<Vec<String>>();
-            event_fields.push(format!("\"call\""));
+            event_fields.push("\"call\"".to_string());
             uwrite!(
                 self.src,
                 "tracing::event!(tracing::Level::TRACE, {});\n",
@@ -2554,7 +2552,7 @@ impl<'a> InterfaceGenerator<'a> {
             uwrite!(
                 self.src,
                 "tracing::event!(tracing::Level::TRACE, {}, \"return\");",
-                formatting_for_results(func.result, &self.resolve, flags)
+                formatting_for_results(func.result, self.resolve, flags)
             );
         }
 
@@ -2573,7 +2571,7 @@ impl<'a> InterfaceGenerator<'a> {
             };
             let convert_trait = match self.path_to_interface(owner) {
                 Some(path) => format!("{path}::Host"),
-                None => format!("Host"),
+                None => "Host".to_string(),
             };
             let convert = format!("{}::convert_{}", convert_trait, err_name.to_snake_case());
             let convert = if flags.contains(FunctionFlags::STORE) {
@@ -3368,11 +3366,11 @@ fn formatting_for_results(result: Option<Type>, resolve: &Resolve, flags: Functi
     };
 
     if !flags.contains(FunctionFlags::VERBOSE_TRACING) && contains_lists {
-        return format!("result = tracing::field::debug(\"...\")");
+        return "result = tracing::field::debug(\"...\")".to_string();
     }
 
     // Normal tracing.
-    format!("result = tracing::field::debug(&r)")
+    "result = tracing::field::debug(&r)".to_string()
 }
 
 /// Test whether the given type contains lists.
@@ -3453,17 +3451,17 @@ fn func_field_name(resolve: &Resolve, func: &Function) -> String {
         FunctionKind::Method(id) | FunctionKind::AsyncMethod(id) => {
             name.push_str("method-");
             name.push_str(resolve.types[id].name.as_ref().unwrap());
-            name.push_str("-");
+            name.push('-');
         }
         FunctionKind::Static(id) | FunctionKind::AsyncStatic(id) => {
             name.push_str("static-");
             name.push_str(resolve.types[id].name.as_ref().unwrap());
-            name.push_str("-");
+            name.push('-');
         }
         FunctionKind::Constructor(id) => {
             name.push_str("constructor-");
             name.push_str(resolve.types[id].name.as_ref().unwrap());
-            name.push_str("-");
+            name.push('-');
         }
         FunctionKind::Freestanding | FunctionKind::AsyncFreestanding => {}
     }
@@ -3484,7 +3482,7 @@ fn get_resources<'a>(
         })
 }
 
-fn get_resource_functions<'a>(resolve: &'a Resolve, resource_id: TypeId) -> Vec<&'a Function> {
+fn get_resource_functions(resolve: &Resolve, resource_id: TypeId) -> Vec<&Function> {
     let resource = &resolve.types[resource_id];
     match resource.owner {
         TypeOwner::World(id) => resolve.worlds[id]

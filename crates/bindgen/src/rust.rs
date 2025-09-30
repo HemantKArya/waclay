@@ -51,7 +51,7 @@ pub trait RustGenerator<'a> {
                     if lt != "'_" {
                         format!("&{lt} str")
                     } else {
-                        format!("&str")
+                        "&str".to_string()
                     }
                 }
                 TypeMode::Owned => {
@@ -92,7 +92,7 @@ pub trait RustGenerator<'a> {
                     if lt != "'_" {
                         out.push_str(&format!("&{lt} "))
                     } else {
-                        out.push_str("&")
+                        out.push('&')
                     }
                 }
             }
@@ -159,9 +159,9 @@ pub trait RustGenerator<'a> {
                 let mut out = "(".to_string();
                 for ty in t.types.iter() {
                     out.push_str(&self.ty(ty, mode));
-                    out.push_str(",");
+                    out.push(',');
                 }
-                out.push_str(")");
+                out.push(')');
                 out
             }
             TypeDefKind::Record(_) => {
@@ -236,7 +236,7 @@ pub trait RustGenerator<'a> {
         let wt = self.wasmtime_path();
         let mut out = format!("{wt}::component::HostStream<");
         out.push_str(&self.optional_ty(ty, TypeMode::Owned));
-        out.push_str(">");
+        out.push('>');
         out
     }
 
@@ -247,7 +247,7 @@ pub trait RustGenerator<'a> {
         let wt = self.wasmtime_path();
         let mut out = format!("{wt}::component::HostFuture<");
         out.push_str(&self.optional_ty(ty, TypeMode::Owned));
-        out.push_str(">");
+        out.push('>');
         out
     }
 
@@ -284,7 +284,7 @@ pub trait RustGenerator<'a> {
                 ty.owner,
                 &ty.name.as_ref().unwrap().to_upper_camel_case(),
             ));
-            out.push_str(">");
+            out.push('>');
             out
         } else {
             format!("{wt}::component::ResourceAny")
@@ -405,7 +405,7 @@ pub trait RustGenerator<'a> {
             out.push_str(&self.ty(&ty, TypeMode::Owned));
             out.push_str(", ");
         }
-        out.push_str(")");
+        out.push(')');
         out
     }
 }
