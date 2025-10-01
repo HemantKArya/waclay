@@ -385,12 +385,16 @@ jobs:
       run: |
         # Format check excluding generated bindings and example files
         # Exclude: 
-        #   - crates/wit-bindgen-wcl/examples/*/host/bindings.rs (generated)
-        #   - crates/wit-bindgen-wcl/examples/*/host/src/main.rs (example host)
-        #   - crates/wit-bindgen-wcl/examples/*/component/src/lib.rs (example component)
-        #   - crates/wcomp_layer/examples/*/src/lib.rs (example component)
+        #   - */host/bindings.rs (generated host bindings)
+        #   - */host/src/bindings.rs (generated host bindings)
+        #   - */component/src/bindings.rs (generated component bindings)
+        #   - */host/src/main.rs (example host)
+        #   - */component/src/lib.rs (example component)
+        #   - */examples/*/src/lib.rs (example component)
         cargo fmt --all -- --check $(find . -name '*.rs' \
           -not -path '*/host/bindings.rs' \
+          -not -path '*/host/src/bindings.rs' \
+          -not -path '*/component/src/bindings.rs' \
           -not -path '*/host/src/main.rs' \
           -not -path '*/component/src/lib.rs' \
           -not -path '*/examples/*/src/lib.rs' \
