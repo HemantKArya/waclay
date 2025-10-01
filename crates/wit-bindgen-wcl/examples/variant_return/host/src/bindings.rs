@@ -5,11 +5,9 @@
 
 use anyhow::*;
 use wasm_component_layer::*;
-use wasm_runtime_layer::{backend};
-
+use wasm_runtime_layer::backend;
 
 // ========== Type Definitions ==========
-
 
 #[derive(Debug, Clone)]
 pub enum Status {
@@ -27,10 +25,17 @@ impl ComponentType for Status {
                 [
                     VariantCase::new("pending", None),
                     VariantCase::new("running", Some(ValueType::String)),
-                    VariantCase::new("completed", Some(ValueType::Result(ResultType::new(Some(ValueType::String), Some(ValueType::String))))),
+                    VariantCase::new(
+                        "completed",
+                        Some(ValueType::Result(ResultType::new(
+                            Some(ValueType::String),
+                            Some(ValueType::String),
+                        ))),
+                    ),
                     VariantCase::new("failed", Some(ValueType::String)),
                 ],
-            ).unwrap(),
+            )
+            .unwrap(),
         )
     }
 
@@ -46,7 +51,11 @@ impl ComponentType for Status {
                 "pending" => Ok(Status::Pending),
                 "running" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
+                        let converted = if let Value::String(s) = payload_value {
+                            s.to_string()
+                        } else {
+                            bail!("Expected string")
+                        };
                         Ok(Status::Running(converted))
                     } else {
                         bail!("Expected payload for running case")
@@ -62,7 +71,11 @@ impl ComponentType for Status {
                 }
                 "failed" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
+                        let converted = if let Value::String(s) = payload_value {
+                            s.to_string()
+                        } else {
+                            bail!("Expected string")
+                        };
                         Ok(Status::Failed(converted))
                     } else {
                         bail!("Expected payload for failed case")
@@ -81,10 +94,17 @@ impl ComponentType for Status {
             [
                 VariantCase::new("pending", None),
                 VariantCase::new("running", Some(ValueType::String)),
-                VariantCase::new("completed", Some(ValueType::Result(ResultType::new(Some(ValueType::String), Some(ValueType::String))))),
+                VariantCase::new(
+                    "completed",
+                    Some(ValueType::Result(ResultType::new(
+                        Some(ValueType::String),
+                        Some(ValueType::String),
+                    ))),
+                ),
                 VariantCase::new("failed", Some(ValueType::String)),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         let (discriminant, payload) = match self {
             Status::Pending => (0, None),
@@ -122,6 +142,4 @@ pub mod exports_exports {
             .ok_or_else(|| anyhow!("Function 'get-status' not found"))?
             .typed::<(), Status>()
     }
-
 }
-

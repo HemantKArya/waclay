@@ -382,7 +382,9 @@ jobs:
           ${{ runner.os }}-cargo-lint-
 
     - name: Check code formatting
-      run: cargo fmt --all -- --check
+      run: |
+        # Format check excluding generated bindings files
+        cargo fmt --all -- --check $(find . -name '*.rs' -not -path '*/examples/*/host/src/bindings.rs' -not -path './target/*')
 
     - name: Run clippy (wcomp_layer)
       working-directory: crates/wcomp_layer
