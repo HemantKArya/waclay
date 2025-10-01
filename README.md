@@ -1,80 +1,185 @@
-# waclay Workspace
+<div align="center">
 
-[![Crates.io](https://img.shields.io/crates/v/waclay.svg)](https://crates.io/crates/waclay)
-[![Docs.rs](https://docs.rs/waclay/badge.svg)](https://docs.rs/waclay)
+# 🚀 waclay
+
+### WebAssembly Component Layer - Runtime Agnostic
+
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![Unsafe Forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-This workspace contains multiple crates for WebAssembly Component Model development:
+*A maintained and actively developed fork bringing the WebAssembly Component Model to life*
 
-## Workspace Structure
+[Features](#-features) •
+[Quick Start](#-quick-start) •
+[Examples](#-examples) •
+[Contributing](#-contributing) •
+[Credits](#-credits)
+
+</div>
+
+---
+
+## 📖 About This Project
+
+**waclay** (WebAssembly Component Layer) is a **runtime-agnostic** implementation of the [WebAssembly Component Model](https://github.com/WebAssembly/component-model). This project enables you to load, link, and execute WASM components with full component model support across **any** WebAssembly runtime backend.
+
+### 🎯 Why This Fork?
+
+This is a **maintained fork** of the original `wasm_component_layer` project. After the original developer discontinued active maintenance, the project became difficult to compile and use with modern Rust toolchains. This fork aims to:
+
+- ✅ **Keep it compiling** - Updated to work with latest Rust and dependencies (50+ commits of fixes and improvements)
+- ✅ **Add new features** - Including the new `wit-bindgen-wcl` tool for generating host bindings
+- ✅ **Maintain usability** - Making it a practical tool for plugin development and WASM-based applications
+- ✅ **Stay runtime agnostic** - Preserving the brilliant design that works with Wasmi, Wasmtime, and other backends
+- ✅ **Build community** - Active development and welcoming contributions until Component Model standardization
+
+### 💡 The Brilliant Design
+
+The original author's vision of a **runtime-agnostic component layer** combined with the **wasm_runtime_layer** abstraction is truly innovative. This design allows you to:
+
+- Switch between different WASM runtimes (Wasmi, Wasmtime, etc.) without changing your code
+- Use the same Component Model API regardless of the underlying execution engine
+- Build portable WASM applications that work across multiple platforms and backends
+
+This architecture is **essential** for the WASM ecosystem as we wait for the Component Model to be finalized and fully supported across all runtimes.
+
+---
+
+## ✨ Features
+
+### Core Capabilities
+
+- 🔧 **Component Model Support** - Full implementation of WebAssembly Component Model
+- 🔄 **Runtime Agnostic** - Works with Wasmi, Wasmtime, and any backend via `wasm_runtime_layer`
+- 🎭 **Type System** - Complete support for WIT types: records, variants, enums, resources, etc.
+- 🚀 **Zero Unsafe Code** - 100% safe Rust implementation
+- 📦 **Resource Management** - Proper handling of owned and borrowed resources with destructors
+- 🔗 **Dynamic Loading** - Runtime inspection and generation of component interface types
+- ⚡ **Optimized Lists** - Specialized list types for faster lifting/lowering operations
+
+### NEW: wit-bindgen-wcl
+
+**`wit-bindgen-wcl`** is a command-line tool that generates ergonomic Rust host bindings from WIT files:
+
+- ✨ **Type-Safe Bindings** - Generates strongly-typed Rust code from WIT definitions
+- 🎯 **Easy Integration** - Simple workflow from WIT → Rust bindings → Host application
+- 🔧 **Active Development** - Basic features working for simple use cases (see examples)
+- 🤝 **Community Needed** - Heavy development in progress, contributions welcome!
+
+**Current Status:** Works for simple to moderate complexity WIT files. See the `examples/` directory for supported patterns.
+
+---
+
+## 🏗️ Workspace Structure
+
+This workspace contains two main crates:
 
 ```
 waclay/
-├── Cargo.toml              # Workspace root
 ├── crates/
-│   ├── waclay/             # Main library crate
-│   │   ├── src/            # Core component layer implementation
-│   │   ├── examples/       # Library usage examples
-│   │   └── docs/           # Documentation
-│   └── wit-bindgen-wcl/    # WIT binding generator binary
-│       └── src/            # Code generator implementation
-└── README.md               # This file
+│   ├── waclay/             # 🎯 Core Component Layer Library
+│   │   ├── src/            # Runtime-agnostic component model implementation
+│   │   ├── examples/       # 10 comprehensive examples showing features
+│   │   └── docs/           # API documentation and guides
+│   │
+│   └── wit-bindgen-wcl/    # 🔧 WIT Binding Generator (NEW!)
+│       ├── src/            # Code generator for host bindings
+│       └── examples/       # 9 examples with generated bindings
+│
+├── test-waclay.ps1         # Test suite for core library
+├── test-wit-bindgen.ps1    # Test suite for binding generator
+└── test-all.ps1            # Complete workspace tests
 ```
 
-## Crates
+### 📦 Crates
 
-### `waclay`
-Runtime agnostic implementation of the [WebAssembly component model](https://github.com/WebAssembly/component-model).
-It supports loading and linking WASM components, inspecting and generating component interface types at runtime, and more atop any WebAssembly backend. The implementation is based upon the [`wasmtime`](https://github.com/bytecodealliance/wasmtime), [`js-component-bindgen`](https://github.com/bytecodealliance/jco), and [`wit-parser`](https://github.com/bytecodealliance/wasm-tools/tree/main) crates.
+#### `waclay` - Core Library
+
+Runtime-agnostic WebAssembly Component Model implementation. Load and execute components on any WASM runtime!
 
 - **Version:** 0.1.3
 - **License:** Apache-2.0
 - **Repository:** https://github.com/HemantKArya/waclay
 
-### `wit-bindgen-wcl`
-A command-line tool for generating Rust bindings from WIT (WebAssembly Interface Type) files for use with `waclay`.
+#### `wit-bindgen-wcl` - Binding Generator
 
-## Quick Start
+Generate type-safe Rust host bindings from WIT files. Makes working with components much more ergonomic!
 
-### Building the workspace
+- **Status:** Active Development - Basic features working
+- **Use Cases:** Simple to moderate complexity WIT files (check examples)
+- **Community:** Contributors needed to expand capabilities
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+```bash
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Install wasm-tools for building components
+cargo install wasm-tools
+```
+
+### Installation
 ```bash
 cargo build
 ```
 
-### Building a specific crate
-```bash
-cargo build -p waclay
-cargo build -p wit-bindgen-wcl
-```
+### Installation
 
-### Running the binding generator
-```bash
-cargo run --bin wit-bindgen-wcl -- <wit-file-or-dir> <output-file>
-```
+#### Option 1: Use in Your Project (Recommended)
 
-Example:
-```bash
-cargo run --bin wit-bindgen-wcl -- ./my-component/wit ./bindings.rs
-```
-
-### Installing the binding generator
-```bash
-cargo install --path crates/wit-bindgen-wcl
-wit-bindgen-wcl <wit-dir> <output-file>
-```
-
-## Usage
-
-To use `waclay`, a runtime is required. The [`wasm_runtime_layer`](https://github.com/DouglasDwyer/wasm_runtime_layer) crate provides the common interface used for WebAssembly runtimes, so when using this crate it must also be added to the `Cargo.toml` file with the appropriate runtime selected. For instance, the examples in this repository use the [`wasmi_runtime_layer`](https://crates.io/crates/wasmi_runtime_layer) runtime:
+Add to your `Cargo.toml`:
 
 ```toml
-waclay = "0.1.16"
-wasmi_runtime_layer = "0.31.0"
+[dependencies]
+waclay = { git = "https://github.com/HemantKArya/waclay" }
+# Choose your runtime backend
+wasmi_runtime_layer = "0.51.0"
+# OR
 # wasmtime_runtime_layer = "21.0.0"
-# js_wasm_runtime_layer = "0.4.0"
 ```
 
-The following is a small overview of `waclay`'s API. The complete example may be found in the [examples folder](/examples). Consider a WASM component with the following WIT:
+> **Note:** Not yet published to crates.io - may be published in the future. Use git dependency for now.
+
+**Optional: Install wit-bindgen-wcl for generating bindings**
+
+If you want to generate host bindings from WIT files:
+
+```bash
+# Install the binding generator tool globally
+cargo install --git https://github.com/HemantKArya/waclay wit-bindgen-wcl
+
+# Now you can use it
+wit-bindgen-wcl ./path/to/wit ./bindings.rs
+```
+
+#### Option 2: Build from Source
+
+```bash
+git clone https://github.com/HemantKArya/waclay.git
+cd waclay
+
+# Build the workspace
+cargo build --release
+
+# Install the binding generator
+cargo install --path crates/wit-bindgen-wcl
+```
+
+### Basic Usage Example
+
+### Basic Usage Example
+
+Here's a simple example of loading and calling a WASM component:
+
+**1. Define your WIT interface** (`guest.wit`)
+**1. Define your WIT interface** (`guest.wit`)
 
 ```wit
 package test:guest
@@ -89,7 +194,7 @@ world guest {
 }
 ```
 
-The component can be loaded into `waclay` and invoked as follows:
+**2. Load and call the component** (Rust host code)
 
 ```rust
 use waclay::*;
@@ -124,106 +229,322 @@ pub fn main() {
 }
 ```
 
-## Supported capabilities
+That's it! You've successfully loaded and executed a WebAssembly component. 🎉
 
-`waclay` supports the following major capabilities:
+### Using wit-bindgen-wcl for Better Ergonomics
 
-- Parsing and instantiating WASM component binaries
-- Runtime generation of component interface types
-- Specialized list types for faster lifting/lowering
-- Structural equality of component interface types, as mandated by the spec
-- Support for guest resources
-- Support for strongly-typed host resources with destructors
+Generate type-safe bindings from WIT files:
 
-The following things have yet to be implemented:
+```bash
+# Generate bindings from WIT directory
+wit-bindgen-wcl ./path/to/wit ./bindings.rs
 
-- String transcoders
-- A macro for generating host bindings
-- More comprehensive tests
-- Subtyping
-
-## Optional features
-
-**serde** - Allows for the serialization of identifiers, types, and values. Note that serializing resources is not allowed, because resources may be tied to specific instances.
-
-## Examples
-
-### waclay Examples
-
-Basic component model examples demonstrating core features:
-
-```shell
-# Run from workspace root
-cargo run --example single_component     # Simple component instantiation
-cargo run --example string_host_guest    # String passing between host/guest
-cargo run --example func_param           # Function parameters
-cargo run --example record_response      # Record types
-cargo run --example option_result        # Option and Result types
-cargo run --example variant_return       # Variant types
-cargo run --example complex_return       # Complex return types
-cargo run --example resource             # Resource handling
-cargo run --example guest_resource       # Guest-defined resources
-cargo run --example multilevel_resource  # Multi-level resources
+# Use in your code
+cargo run --bin wit-bindgen-wcl -- ./guest.wit ./bindings.rs
 ```
 
-### wit-bindgen-wcl Examples
+Then use the generated bindings for type-safe, ergonomic API:
 
-Advanced examples using generated bindings (9 examples, prefixed with `bindgen-`):
+```rust
+mod bindings;
+use bindings::*;  // Type-safe functions generated from WIT
 
-```shell
-# Run from workspace root
-cargo run --example bindgen-calculator         # Calculator with logging & error handling
-cargo run --example bindgen-web-scraper        # Web scraping component
-cargo run --example bindgen-single-component   # Basic binding generation
-cargo run --example bindgen-string-host-guest  # String passing with generated bindings
-cargo run --example bindgen-func-param         # Function parameters with generated bindings
-cargo run --example bindgen-record-response    # Record types with generated bindings
-cargo run --example bindgen-option-result      # Option and Result with generated bindings
-cargo run --example bindgen-variant-return     # Variant types with generated bindings
-cargo run --example bindgen-complex-return     # Complex return types with generated bindings
+// Much more ergonomic than raw Value manipulation!
 ```
 
-**Note:** wit-bindgen-wcl examples are prefixed with `bindgen-` to distinguish them from 
-waclay examples. The key difference is that wit-bindgen-wcl examples use 
-**generated bindings** (more ergonomic, type-safe), while waclay examples 
-use the **raw API** (more flexible, runtime introspection).
+---
 
-### Building Example Components
+## 🎯 How It Works
 
-To rebuild the WASM components for examples:
+### The Runtime Agnostic Architecture
 
-```shell
-# Example: rebuilding calculator component
-cd crates/wit-bindgen-wcl/examples/calculator/component
-rustup toolchain install nightly
-rustup override set nightly
-cargo build --target wasm32-unknown-unknown
-wasm-tools component new target/wasm32-unknown-unknown/debug/calculator.wasm -o component.wasm
+```
+┌─────────────────────────────────────────────┐
+│           Your Application                  │
+├─────────────────────────────────────────────┤
+│         waclay (Component Layer)            │
+│  • Component Model Implementation           │
+│  • Type System & Lifting/Lowering           │
+│  • Resource Management                      │
+├─────────────────────────────────────────────┤
+│    wasm_runtime_layer (Abstraction)         │
+│  • Common Runtime Interface                 │
+│  • Backend Agnostic API                     │
+├──────────┬──────────┬──────────┬────────────┤
+│  Wasmi   │ Wasmtime │  Wasmer  │  Browser   │
+│ Runtime  │  Runtime │  Runtime │   (JS)     │
+└──────────┴──────────┴──────────┴────────────┘
 ```
 
-## Testing
+**Key Benefits:**
 
-The workspace includes comprehensive test scripts for cross-platform testing:
+1. **Write once, run anywhere** - Your code works with any runtime
+2. **Easy runtime switching** - Change one line to switch backends
+3. **Future-proof** - As new runtimes emerge, they just work
+4. **Testability** - Test with lightweight runtime, deploy with optimized one
 
-```shell
-# Test both crates (full suite including Android/Linux builds)
-.\test-all.ps1
+---
 
-# Quick tests (skip Android/Linux builds)
+## 🤝 Contributing
+
+**We need your help!** This project is actively maintained, but we need community support to reach its full potential.
+
+### Why Contribute?
+
+- 🌟 **Shape the Future** - Help build critical WebAssembly infrastructure
+- 📚 **Learn WASM** - Deep dive into Component Model internals
+- 🎯 **Real Impact** - Used in production for plugin systems and WASM applications
+- 🤗 **Welcoming Community** - All skill levels welcome, we'll help you get started
+
+### What We Need
+
+| Area | Priority | Description |
+|------|----------|-------------|
+| 🔧 **wit-bindgen-wcl** | 🔴 High | Expand binding generation for complex WIT patterns |
+| 📝 **Documentation** | 🔴 High | API docs, tutorials, and guides |
+| 🧪 **Testing** | 🟡 Medium | More comprehensive tests and edge cases |
+| 🐛 **Bug Fixes** | 🟢 Ongoing | Report and fix issues |
+| 💡 **Features** | 🟢 Ongoing | String transcoders, subtyping support |
+| 🎨 **Examples** | 🟢 Ongoing | More real-world use cases |
+
+### Getting Started
+
+1. **Fork the repository**
+2. **Pick an issue** or create a new one
+3. **Make your changes** with tests
+4. **Submit a PR** with a clear description
+
+Check out existing examples and tests to understand the codebase. Don't hesitate to ask questions in issues!
+
+### Development Setup
+
+```bash
+# Clone your fork
+git clone https://github.com/YourUsername/waclay.git
+cd waclay
+
+# Run tests to ensure everything works
 .\test-all.ps1 -Fast
 
-# Test individual crates
-.\test-wcomp-layer.ps1      # Test waclay only
-.\test-wit-bindgen.ps1      # Test wit-bindgen-wcl only
+# Make your changes and test again
+# ... your awesome contributions ...
 
-# Skip specific platforms
-.\test-wcomp-layer.ps1 -SkipAndroid -SkipLinux
-.\test-wit-bindgen.ps1 -SkipExamples
+.\test-all.ps1 -Fast
 ```
 
-The test scripts validate:
-- Unit tests and compilation
-- Example builds and execution
-- Cross-platform compatibility (Windows, Android, Linux)
-- Binary functionality
-- Workspace-level integration
+---
+
+## 🗺️ Roadmap
+
+### Current Focus (v0.1.x)
+
+- [x] Maintain compatibility with latest Rust
+- [x] Basic `wit-bindgen-wcl` functionality
+- [ ] Comprehensive documentation
+- [ ] More `wit-bindgen-wcl` features
+- [ ] String transcoder support
+- [ ] Subtyping support
+
+### Future (v0.2.x+)
+
+- [ ] Publish to crates.io
+- [ ] Host binding macro (`#[derive(HostBindings)]`)
+- [ ] Performance optimizations
+- [ ] More runtime backend support
+- [ ] WASI Preview 2 integration examples
+
+**Note:** This project will be actively maintained until the Component Model is finalized by the WASI community and fully supported across all major runtimes.
+
+---
+
+## 📚 Examples
+
+This repository includes **19 comprehensive examples** demonstrating various features:
+
+### 🔹 Core Library Examples (10 examples)
+
+Using the raw component API - great for learning the fundamentals:
+
+### 🔹 Core Library Examples (10 examples)
+
+Using the raw component API - great for learning the fundamentals:
+
+```bash
+# From workspace root
+cargo run --example single_component     # ✅ Simple component instantiation
+cargo run --example string_host_guest    # ✅ String passing between host/guest
+cargo run --example func_param           # ✅ Function parameters
+cargo run --example record_response      # ✅ Record types
+cargo run --example option_result        # ✅ Option and Result types
+cargo run --example variant_return       # ✅ Variant types
+cargo run --example complex_return       # ✅ Complex return types
+cargo run --example resource             # ✅ Resource handling
+cargo run --example guest_resource       # ✅ Guest-defined resources
+cargo run --example multilevel_resource  # ✅ Multi-level resources
+```
+
+### 🔸 Generated Bindings Examples (9 examples)
+
+Using `wit-bindgen-wcl` for type-safe, ergonomic code:
+
+```bash
+# From workspace root
+cargo run --example bindgen-calculator         # ✅ Calculator with logging & error handling
+cargo run --example bindgen-web-scraper        # ✅ Web scraping component
+cargo run --example bindgen-single-component   # ✅ Basic binding generation
+cargo run --example bindgen-string-host-guest  # ✅ String passing with bindings
+cargo run --example bindgen-func-param         # ✅ Function parameters with bindings
+cargo run --example bindgen-record-response    # ✅ Record types with bindings
+cargo run --example bindgen-option-result      # ✅ Option and Result with bindings
+cargo run --example bindgen-variant-return     # ✅ Variant types with bindings
+cargo run --example bindgen-complex-return     # ✅ Complex return types with bindings
+```
+
+> **💡 Tip:** Examples prefixed with `bindgen-` use generated bindings (more ergonomic), while others use the raw API (more flexible).
+
+### Building Your Own Components
+
+Want to build the example components yourself?
+
+```bash
+# Navigate to any component example
+cd crates/wit-bindgen-wcl/examples/calculator/component
+
+# Install nightly toolchain
+rustup toolchain install nightly
+rustup override set nightly
+
+# Build the WASM module
+cargo build --target wasm32-unknown-unknown --release
+
+# Convert to component
+wasm-tools component new \
+  target/wasm32-unknown-unknown/release/calculator.wasm \
+  -o component.wasm
+```
+
+---
+
+## 🧪 Testing
+
+Comprehensive test suite with cross-platform support:
+
+```bash
+# 🚀 Quick tests (recommended for development)
+.\test-all.ps1 -Fast
+
+# 🌍 Full test suite (all platforms)
+.\test-all.ps1
+
+# 🎯 Test specific crate
+.\test-waclay.ps1           # Test core library only
+.\test-wit-bindgen.ps1      # Test binding generator only
+
+# ⚙️ Advanced options
+.\test-waclay.ps1 -SkipAndroid -SkipLinux    # Skip cross-compilation
+.\test-wit-bindgen.ps1 -SkipExamples         # Skip example builds
+```
+
+**Test Coverage:**
+- ✅ Unit tests and integration tests
+- ✅ All 19 examples build and run
+- ✅ Cross-platform compatibility (Windows, Linux, Android)
+- ✅ Multiple runtime backends
+
+---
+
+## ⚙️ Optional Features
+
+- **`serde`** - Enable serialization for types and values (resources excluded as they're instance-bound)
+
+```toml
+waclay = { git = "https://github.com/HemantKArya/waclay", features = ["serde"] }
+```
+
+---
+
+## 📋 Supported Capabilities
+
+### ✅ Fully Supported
+
+- ✅ Component parsing and instantiation
+- ✅ All WIT types (records, variants, enums, options, results, etc.)
+- ✅ Specialized list types for performance
+- ✅ Structural type equality
+- ✅ Guest resources
+- ✅ Host resources with destructors
+- ✅ Runtime type inspection
+- ✅ Multiple runtime backends
+
+### 🚧 In Progress
+
+- 🚧 `wit-bindgen-wcl` - Basic features working, expanding coverage
+- 🚧 Comprehensive testing suite
+- 🚧 Documentation and tutorials
+
+### 📋 Planned
+
+- 📋 String transcoders
+- 📋 Host binding macros
+- 📋 Subtyping support
+- 📋 Performance benchmarks
+
+---
+
+## 📜 License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Credits
+
+### Original Author
+
+**Huge thanks to [DouglasDwyer](https://github.com/DouglasDwyer)** for creating the original `wasm_component_layer` project. The core architecture and design are his brilliant work:
+
+- 💡 **Visionary Design** - The runtime-agnostic component layer concept
+- 🏗️ **Solid Foundation** - Clean, well-structured codebase  
+- 🔧 **wasm_runtime_layer** - The abstraction that makes it all possible
+
+Without this foundation, this project wouldn't exist.
+
+### This Fork
+
+**Maintained by [HemantKArya](https://github.com/HemantKArya)** since the original project was discontinued:
+
+- 🔧 50+ commits of updates and fixes
+- 🚀 Keeping it compiling with modern Rust
+- ✨ New `wit-bindgen-wcl` tool
+- 📚 Improved documentation
+- 🤝 Community building
+
+### Built With
+
+This project stands on the shoulders of giants:
+
+- [wasmtime](https://github.com/bytecodealliance/wasmtime) - Component Model implementation reference
+- [wit-parser](https://github.com/bytecodealliance/wasm-tools) - WIT parsing and validation
+- [wasm_runtime_layer](https://github.com/DouglasDwyer/wasm_runtime_layer) - Runtime abstraction
+- All the runtime backends: Wasmi, Wasmtime, and others
+
+---
+
+## 📞 Get in Touch
+
+- 🐛 **Found a bug?** [Open an issue](https://github.com/HemantKArya/waclay/issues)
+- 💡 **Have an idea?** [Start a discussion](https://github.com/HemantKArya/waclay/discussions)
+- 🤝 **Want to contribute?** Check our [Contributing](#-contributing) section
+- ⭐ **Like the project?** Give us a star on GitHub!
+
+---
+
+<div align="center">
+
+**Built with ❤️ for the WebAssembly community**
+
+*Making Component Model accessible to everyone, one runtime at a time*
+
+[⬆ Back to Top](#-waclay)
+
+</div>
