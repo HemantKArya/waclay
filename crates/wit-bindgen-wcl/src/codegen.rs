@@ -716,7 +716,7 @@ fn generate_function_registration(
     // FuncType
     writeln!(output, "                    FuncType::new(")?;
     write!(output, "                        [")?;
-    for (_i, (_name, ty)) in func.params.iter().enumerate() {
+    for (_name, ty) in func.params.iter() {
         write!(output, "{}, ", type_to_value_type(resolve, ty))?;
     }
     writeln!(output, "],")?;
@@ -880,6 +880,7 @@ fn generate_export_helper(
         Results::Anon(ty) => type_to_rust_type(resolve, ty),
     };
 
+    writeln!(output, "    #[allow(clippy::type_complexity)]")?;
     writeln!(output, "    pub fn {}<T, E: backend::WasmEngine>(", fn_name)?;
     writeln!(output, "        instance: &Instance,")?;
     writeln!(output, "        _store: &mut Store<T, E>,")?;
@@ -1064,19 +1065,15 @@ fn value_to_rust(resolve: &Resolve, value_expr: &str, ty: &Type) -> String {
                 // Result types can use from_value directly since Result<T, E> implements ComponentType
                 // when T and E implement ComponentType
                 let ok_ty = match &result_ty.ok {
-                    Some(ty) => format!("{}", type_to_rust_type(resolve, ty)),
+                    Some(ty) => type_to_rust_type(resolve, ty).to_string(),
                     None => "()".to_string(),
                 };
                 let err_ty = match &result_ty.err {
-                    Some(ty) => format!("{}", type_to_rust_type(resolve, ty)),
+                    Some(ty) => type_to_rust_type(resolve, ty).to_string(),
                     None => "()".to_string(),
                 };
 
-                let value_ref = if is_slice_access {
-                    format!("&{}", value_expr)
-                } else {
-                    format!("&{}", value_expr)
-                };
+                let value_ref = format!("&{}", value_expr);
 
                 return format!(
                     "Result::<{}, {}>::from_value({})?",
@@ -1087,11 +1084,7 @@ fn value_to_rust(resolve: &Resolve, value_expr: &str, ty: &Type) -> String {
                 // These should be handled by ComponentType::from_value
                 // Need turbofish for generic types
                 let rust_ty = type_to_rust_type(resolve, ty);
-                let value_ref = if is_slice_access {
-                    format!("&{}", value_expr)
-                } else {
-                    format!("&{}", value_expr)
-                };
+                let value_ref = format!("&{}", value_expr);
                 // For tuple types, we need angle brackets around the entire type
                 // because qualified paths require it: <(T, U)>::from_value
                 let ty_for_call = if rust_ty.starts_with('(') {
@@ -1105,11 +1098,7 @@ fn value_to_rust(resolve: &Resolve, value_expr: &str, ty: &Type) -> String {
             _ => {
                 // Named types (records, variants, enums, etc.)
                 let rust_ty = type_to_rust_type(resolve, ty);
-                let value_ref = if is_slice_access {
-                    format!("&{}", value_expr)
-                } else {
-                    format!("&{}", value_expr)
-                };
+                let value_ref = format!("&{}", value_expr);
                 return format!("{}::from_value({})?", rust_ty, value_ref);
             }
         }

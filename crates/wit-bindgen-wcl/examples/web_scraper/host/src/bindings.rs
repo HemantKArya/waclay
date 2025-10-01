@@ -5,7 +5,8 @@
 
 use anyhow::*;
 use wasm_component_layer::*;
-use wasm_runtime_layer::backend;
+use wasm_runtime_layer::{backend};
+
 
 // ========== Type Definitions ==========
 
@@ -22,13 +23,15 @@ pub enum HttpMethod {
 
 impl ComponentType for HttpMethod {
     fn ty() -> ValueType {
-        ValueType::Enum(
-            EnumType::new(
-                None,
-                ["get", "post", "put", "delete", "patch", "head", "options"],
-            )
-            .unwrap(),
-        )
+        ValueType::Enum(EnumType::new(None, [
+            "get",
+            "post",
+            "put",
+            "delete",
+            "patch",
+            "head",
+            "options",
+        ]).unwrap())
     }
 
     fn from_value(value: &Value) -> Result<Self> {
@@ -50,11 +53,15 @@ impl ComponentType for HttpMethod {
     }
 
     fn into_value(self) -> Result<Value> {
-        let enum_type = EnumType::new(
-            None,
-            ["get", "post", "put", "delete", "patch", "head", "options"],
-        )
-        .unwrap();
+        let enum_type = EnumType::new(None, [
+            "get",
+            "post",
+            "put",
+            "delete",
+            "patch",
+            "head",
+            "options",
+        ]).unwrap();
 
         let discriminant = match self {
             HttpMethod::Get => 0,
@@ -83,9 +90,11 @@ impl ComponentType for HttpHeader {
         ValueType::Record(
             RecordType::new(
                 None,
-                [("name", ValueType::String), ("value", ValueType::String)],
-            )
-            .unwrap(),
+                [
+                    ("name", ValueType::String),
+                    ("value", ValueType::String),
+                ],
+            ).unwrap(),
         )
     }
 
@@ -98,18 +107,13 @@ impl ComponentType for HttpHeader {
                 .field("value")
                 .ok_or_else(|| anyhow!("Missing 'value' field"))?;
 
-            let name = if let Value::String(s) = name {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
-            let value = if let Value::String(s) = value {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let name = if let Value::String(s) = name { s.to_string() } else { bail!("Expected string") };
+            let value = if let Value::String(s) = value { s.to_string() } else { bail!("Expected string") };
 
-            Ok(HttpHeader { name, value })
+            Ok(HttpHeader {
+                name,
+                value,
+            })
         } else {
             bail!("Expected Record value")
         }
@@ -119,9 +123,11 @@ impl ComponentType for HttpHeader {
         let record = Record::new(
             RecordType::new(
                 None,
-                [("name", ValueType::String), ("value", ValueType::String)],
-            )
-            .unwrap(),
+                [
+                    ("name", ValueType::String),
+                    ("value", ValueType::String),
+                ],
+            ).unwrap(),
             [
                 ("name", Value::String(self.name.into())),
                 ("value", Value::String(self.value.into())),
@@ -142,7 +148,11 @@ pub enum SameSitePolicy {
 
 impl ComponentType for SameSitePolicy {
     fn ty() -> ValueType {
-        ValueType::Enum(EnumType::new(None, ["strict", "lax", "none"]).unwrap())
+        ValueType::Enum(EnumType::new(None, [
+            "strict",
+            "lax",
+            "none",
+        ]).unwrap())
     }
 
     fn from_value(value: &Value) -> Result<Self> {
@@ -160,7 +170,11 @@ impl ComponentType for SameSitePolicy {
     }
 
     fn into_value(self) -> Result<Value> {
-        let enum_type = EnumType::new(None, ["strict", "lax", "none"]).unwrap();
+        let enum_type = EnumType::new(None, [
+            "strict",
+            "lax",
+            "none",
+        ]).unwrap();
 
         let discriminant = match self {
             SameSitePolicy::Strict => 0,
@@ -173,6 +187,10 @@ impl ComponentType for SameSitePolicy {
 }
 
 impl UnaryComponentType for SameSitePolicy {}
+
+
+
+
 
 #[derive(Debug, Clone)]
 pub struct Cookie {
@@ -195,31 +213,15 @@ impl ComponentType for Cookie {
                 [
                     ("name", ValueType::String),
                     ("value", ValueType::String),
-                    (
-                        "domain",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
-                    (
-                        "path",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
-                    (
-                        "expires",
-                        ValueType::Option(OptionType::new(ValueType::U64)),
-                    ),
-                    (
-                        "max-age",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("domain", ValueType::Option(OptionType::new(ValueType::String))),
+                    ("path", ValueType::Option(OptionType::new(ValueType::String))),
+                    ("expires", ValueType::Option(OptionType::new(ValueType::U64))),
+                    ("max-age", ValueType::Option(OptionType::new(ValueType::U32))),
                     ("secure", ValueType::Bool),
                     ("http-only", ValueType::Bool),
-                    (
-                        "same-site",
-                        ValueType::Option(OptionType::new(SameSitePolicy::ty())),
-                    ),
+                    ("same-site", ValueType::Option(OptionType::new(SameSitePolicy::ty()))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -253,30 +255,14 @@ impl ComponentType for Cookie {
                 .field("same-site")
                 .ok_or_else(|| anyhow!("Missing 'same-site' field"))?;
 
-            let name = if let Value::String(s) = name {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
-            let value = if let Value::String(s) = value {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let name = if let Value::String(s) = name { s.to_string() } else { bail!("Expected string") };
+            let value = if let Value::String(s) = value { s.to_string() } else { bail!("Expected string") };
             let domain = Option::<String>::from_value(&domain)?;
             let path = Option::<String>::from_value(&path)?;
             let expires = Option::<u64>::from_value(&expires)?;
             let max_age = Option::<u32>::from_value(&max_age)?;
-            let secure = if let Value::Bool(x) = secure {
-                x
-            } else {
-                bail!("Expected bool")
-            };
-            let http_only = if let Value::Bool(x) = http_only {
-                x
-            } else {
-                bail!("Expected bool")
-            };
+            let secure = if let Value::Bool(x) = secure { x } else { bail!("Expected bool") };
+            let http_only = if let Value::Bool(x) = http_only { x } else { bail!("Expected bool") };
             let same_site = Option::<SameSitePolicy>::from_value(&same_site)?;
 
             Ok(Cookie {
@@ -302,31 +288,15 @@ impl ComponentType for Cookie {
                 [
                     ("name", ValueType::String),
                     ("value", ValueType::String),
-                    (
-                        "domain",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
-                    (
-                        "path",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
-                    (
-                        "expires",
-                        ValueType::Option(OptionType::new(ValueType::U64)),
-                    ),
-                    (
-                        "max-age",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("domain", ValueType::Option(OptionType::new(ValueType::String))),
+                    ("path", ValueType::Option(OptionType::new(ValueType::String))),
+                    ("expires", ValueType::Option(OptionType::new(ValueType::U64))),
+                    ("max-age", ValueType::Option(OptionType::new(ValueType::U32))),
                     ("secure", ValueType::Bool),
                     ("http-only", ValueType::Bool),
-                    (
-                        "same-site",
-                        ValueType::Option(OptionType::new(SameSitePolicy::ty())),
-                    ),
+                    ("same-site", ValueType::Option(OptionType::new(SameSitePolicy::ty()))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("name", Value::String(self.name.into())),
                 ("value", Value::String(self.value.into())),
@@ -345,6 +315,9 @@ impl ComponentType for Cookie {
 
 impl UnaryComponentType for Cookie {}
 
+
+
+
 #[derive(Debug, Clone)]
 pub enum RequestBody {
     Text(String),
@@ -362,20 +335,11 @@ impl ComponentType for RequestBody {
                 [
                     VariantCase::new("text", Some(ValueType::String)),
                     VariantCase::new("json", Some(ValueType::String)),
-                    VariantCase::new(
-                        "form",
-                        Some(ValueType::List(ListType::new(ValueType::Tuple(
-                            TupleType::new(None, [ValueType::String, ValueType::String]),
-                        )))),
-                    ),
-                    VariantCase::new(
-                        "binary",
-                        Some(ValueType::List(ListType::new(ValueType::U8))),
-                    ),
+                    VariantCase::new("form", Some(ValueType::List(ListType::new(ValueType::Tuple(TupleType::new(None, [ValueType::String, ValueType::String])))))),
+                    VariantCase::new("binary", Some(ValueType::List(ListType::new(ValueType::U8)))),
                     VariantCase::new("empty", None),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -390,11 +354,7 @@ impl ComponentType for RequestBody {
             match case_name {
                 "text" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(RequestBody::Text(converted))
                     } else {
                         bail!("Expected payload for text case")
@@ -402,11 +362,7 @@ impl ComponentType for RequestBody {
                 }
                 "json" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(RequestBody::Json(converted))
                     } else {
                         bail!("Expected payload for json case")
@@ -442,20 +398,11 @@ impl ComponentType for RequestBody {
             [
                 VariantCase::new("text", Some(ValueType::String)),
                 VariantCase::new("json", Some(ValueType::String)),
-                VariantCase::new(
-                    "form",
-                    Some(ValueType::List(ListType::new(ValueType::Tuple(
-                        TupleType::new(None, [ValueType::String, ValueType::String]),
-                    )))),
-                ),
-                VariantCase::new(
-                    "binary",
-                    Some(ValueType::List(ListType::new(ValueType::U8))),
-                ),
+                VariantCase::new("form", Some(ValueType::List(ListType::new(ValueType::Tuple(TupleType::new(None, [ValueType::String, ValueType::String])))))),
+                VariantCase::new("binary", Some(ValueType::List(ListType::new(ValueType::U8)))),
                 VariantCase::new("empty", None),
             ],
-        )
-        .unwrap();
+        ).unwrap();
 
         let (discriminant, payload) = match self {
             RequestBody::Text(val) => (0, Some(Value::String(val.into()))),
@@ -471,6 +418,9 @@ impl ComponentType for RequestBody {
 }
 
 impl UnaryComponentType for RequestBody {}
+
+
+
 
 #[derive(Debug, Clone)]
 pub struct HttpRequest {
@@ -494,22 +444,12 @@ impl ComponentType for HttpRequest {
                     ("url", ValueType::String),
                     ("headers", ValueType::List(ListType::new(HttpHeader::ty()))),
                     ("cookies", ValueType::List(ListType::new(Cookie::ty()))),
-                    (
-                        "body",
-                        ValueType::Option(OptionType::new(RequestBody::ty())),
-                    ),
-                    (
-                        "timeout-ms",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("body", ValueType::Option(OptionType::new(RequestBody::ty()))),
+                    ("timeout-ms", ValueType::Option(OptionType::new(ValueType::U32))),
                     ("follow-redirects", ValueType::Bool),
-                    (
-                        "max-redirects",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("max-redirects", ValueType::Option(OptionType::new(ValueType::U32))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -541,20 +481,12 @@ impl ComponentType for HttpRequest {
                 .ok_or_else(|| anyhow!("Missing 'max-redirects' field"))?;
 
             let method = HttpMethod::from_value(&method)?;
-            let url = if let Value::String(s) = url {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let url = if let Value::String(s) = url { s.to_string() } else { bail!("Expected string") };
             let headers = Vec::<HttpHeader>::from_value(&headers)?;
             let cookies = Vec::<Cookie>::from_value(&cookies)?;
             let body = Option::<RequestBody>::from_value(&body)?;
             let timeout_ms = Option::<u32>::from_value(&timeout_ms)?;
-            let follow_redirects = if let Value::Bool(x) = follow_redirects {
-                x
-            } else {
-                bail!("Expected bool")
-            };
+            let follow_redirects = if let Value::Bool(x) = follow_redirects { x } else { bail!("Expected bool") };
             let max_redirects = Option::<u32>::from_value(&max_redirects)?;
 
             Ok(HttpRequest {
@@ -581,22 +513,12 @@ impl ComponentType for HttpRequest {
                     ("url", ValueType::String),
                     ("headers", ValueType::List(ListType::new(HttpHeader::ty()))),
                     ("cookies", ValueType::List(ListType::new(Cookie::ty()))),
-                    (
-                        "body",
-                        ValueType::Option(OptionType::new(RequestBody::ty())),
-                    ),
-                    (
-                        "timeout-ms",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("body", ValueType::Option(OptionType::new(RequestBody::ty()))),
+                    ("timeout-ms", ValueType::Option(OptionType::new(ValueType::U32))),
                     ("follow-redirects", ValueType::Bool),
-                    (
-                        "max-redirects",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("max-redirects", ValueType::Option(OptionType::new(ValueType::U32))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("method", self.method.into_value()?),
                 ("url", Value::String(self.url.into())),
@@ -625,9 +547,11 @@ impl ComponentType for HttpStatus {
         ValueType::Record(
             RecordType::new(
                 None,
-                [("code", ValueType::U32), ("text", ValueType::String)],
-            )
-            .unwrap(),
+                [
+                    ("code", ValueType::U32),
+                    ("text", ValueType::String),
+                ],
+            ).unwrap(),
         )
     }
 
@@ -640,18 +564,13 @@ impl ComponentType for HttpStatus {
                 .field("text")
                 .ok_or_else(|| anyhow!("Missing 'text' field"))?;
 
-            let code = if let Value::U32(x) = code {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let text = if let Value::String(s) = text {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let code = if let Value::U32(x) = code { x } else { bail!("Expected u32") };
+            let text = if let Value::String(s) = text { s.to_string() } else { bail!("Expected string") };
 
-            Ok(HttpStatus { code, text })
+            Ok(HttpStatus {
+                code,
+                text,
+            })
         } else {
             bail!("Expected Record value")
         }
@@ -661,9 +580,11 @@ impl ComponentType for HttpStatus {
         let record = Record::new(
             RecordType::new(
                 None,
-                [("code", ValueType::U32), ("text", ValueType::String)],
-            )
-            .unwrap(),
+                [
+                    ("code", ValueType::U32),
+                    ("text", ValueType::String),
+                ],
+            ).unwrap(),
             [
                 ("code", Value::U32(self.code)),
                 ("text", Value::String(self.text.into())),
@@ -688,13 +609,9 @@ impl ComponentType for ResponseData {
                 None,
                 [
                     VariantCase::new("text", Some(ValueType::String)),
-                    VariantCase::new(
-                        "binary",
-                        Some(ValueType::List(ListType::new(ValueType::U8))),
-                    ),
+                    VariantCase::new("binary", Some(ValueType::List(ListType::new(ValueType::U8)))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -709,11 +626,7 @@ impl ComponentType for ResponseData {
             match case_name {
                 "text" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(ResponseData::Text(converted))
                     } else {
                         bail!("Expected payload for text case")
@@ -739,13 +652,9 @@ impl ComponentType for ResponseData {
             None,
             [
                 VariantCase::new("text", Some(ValueType::String)),
-                VariantCase::new(
-                    "binary",
-                    Some(ValueType::List(ListType::new(ValueType::U8))),
-                ),
+                VariantCase::new("binary", Some(ValueType::List(ListType::new(ValueType::U8)))),
             ],
-        )
-        .unwrap();
+        ).unwrap();
 
         let (discriminant, payload) = match self {
             ResponseData::Text(val) => (0, Some(Value::String(val.into()))),
@@ -774,13 +683,9 @@ impl ComponentType for ResponseContent {
                 [
                     ("content-type", ValueType::String),
                     ("data", ResponseData::ty()),
-                    (
-                        "encoding",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
+                    ("encoding", ValueType::Option(OptionType::new(ValueType::String))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -796,11 +701,7 @@ impl ComponentType for ResponseContent {
                 .field("encoding")
                 .ok_or_else(|| anyhow!("Missing 'encoding' field"))?;
 
-            let content_type = if let Value::String(s) = content_type {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let content_type = if let Value::String(s) = content_type { s.to_string() } else { bail!("Expected string") };
             let data = ResponseData::from_value(&data)?;
             let encoding = Option::<String>::from_value(&encoding)?;
 
@@ -821,13 +722,9 @@ impl ComponentType for ResponseContent {
                 [
                     ("content-type", ValueType::String),
                     ("data", ResponseData::ty()),
-                    (
-                        "encoding",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
+                    ("encoding", ValueType::Option(OptionType::new(ValueType::String))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("content-type", Value::String(self.content_type.into())),
                 ("data", self.data.into_value()?),
@@ -857,15 +754,11 @@ impl ComponentType for ResponseTiming {
                 [
                     ("dns-lookup-ms", ValueType::U32),
                     ("tcp-connect-ms", ValueType::U32),
-                    (
-                        "tls-handshake-ms",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("tls-handshake-ms", ValueType::Option(OptionType::new(ValueType::U32))),
                     ("time-to-first-byte-ms", ValueType::U32),
                     ("total-time-ms", ValueType::U32),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -887,27 +780,11 @@ impl ComponentType for ResponseTiming {
                 .field("total-time-ms")
                 .ok_or_else(|| anyhow!("Missing 'total-time-ms' field"))?;
 
-            let dns_lookup_ms = if let Value::U32(x) = dns_lookup_ms {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let tcp_connect_ms = if let Value::U32(x) = tcp_connect_ms {
-                x
-            } else {
-                bail!("Expected u32")
-            };
+            let dns_lookup_ms = if let Value::U32(x) = dns_lookup_ms { x } else { bail!("Expected u32") };
+            let tcp_connect_ms = if let Value::U32(x) = tcp_connect_ms { x } else { bail!("Expected u32") };
             let tls_handshake_ms = Option::<u32>::from_value(&tls_handshake_ms)?;
-            let time_to_first_byte_ms = if let Value::U32(x) = time_to_first_byte_ms {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let total_time_ms = if let Value::U32(x) = total_time_ms {
-                x
-            } else {
-                bail!("Expected u32")
-            };
+            let time_to_first_byte_ms = if let Value::U32(x) = time_to_first_byte_ms { x } else { bail!("Expected u32") };
+            let total_time_ms = if let Value::U32(x) = total_time_ms { x } else { bail!("Expected u32") };
 
             Ok(ResponseTiming {
                 dns_lookup_ms,
@@ -928,23 +805,16 @@ impl ComponentType for ResponseTiming {
                 [
                     ("dns-lookup-ms", ValueType::U32),
                     ("tcp-connect-ms", ValueType::U32),
-                    (
-                        "tls-handshake-ms",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("tls-handshake-ms", ValueType::Option(OptionType::new(ValueType::U32))),
                     ("time-to-first-byte-ms", ValueType::U32),
                     ("total-time-ms", ValueType::U32),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("dns-lookup-ms", Value::U32(self.dns_lookup_ms)),
                 ("tcp-connect-ms", Value::U32(self.tcp_connect_ms)),
                 ("tls-handshake-ms", self.tls_handshake_ms.into_value()?),
-                (
-                    "time-to-first-byte-ms",
-                    Value::U32(self.time_to_first_byte_ms),
-                ),
+                ("time-to-first-byte-ms", Value::U32(self.time_to_first_byte_ms)),
                 ("total-time-ms", Value::U32(self.total_time_ms)),
             ],
         )?;
@@ -953,6 +823,8 @@ impl ComponentType for ResponseTiming {
 }
 
 impl UnaryComponentType for ResponseTiming {}
+
+
 
 #[derive(Debug, Clone)]
 pub struct HttpResponse {
@@ -973,18 +845,11 @@ impl ComponentType for HttpResponse {
                     ("status", HttpStatus::ty()),
                     ("headers", ValueType::List(ListType::new(HttpHeader::ty()))),
                     ("cookies", ValueType::List(ListType::new(Cookie::ty()))),
-                    (
-                        "content",
-                        ValueType::Option(OptionType::new(ResponseContent::ty())),
-                    ),
-                    (
-                        "redirect-chain",
-                        ValueType::List(ListType::new(ValueType::String)),
-                    ),
+                    ("content", ValueType::Option(OptionType::new(ResponseContent::ty()))),
+                    ("redirect-chain", ValueType::List(ListType::new(ValueType::String))),
                     ("timing", ResponseTiming::ty()),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -1037,18 +902,11 @@ impl ComponentType for HttpResponse {
                     ("status", HttpStatus::ty()),
                     ("headers", ValueType::List(ListType::new(HttpHeader::ty()))),
                     ("cookies", ValueType::List(ListType::new(Cookie::ty()))),
-                    (
-                        "content",
-                        ValueType::Option(OptionType::new(ResponseContent::ty())),
-                    ),
-                    (
-                        "redirect-chain",
-                        ValueType::List(ListType::new(ValueType::String)),
-                    ),
+                    ("content", ValueType::Option(OptionType::new(ResponseContent::ty()))),
+                    ("redirect-chain", ValueType::List(ListType::new(ValueType::String))),
                     ("timing", ResponseTiming::ty()),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("status", self.status.into_value()?),
                 ("headers", self.headers.into_value()?),
@@ -1063,6 +921,8 @@ impl ComponentType for HttpResponse {
 }
 
 impl UnaryComponentType for HttpResponse {}
+
+
 
 #[derive(Debug, Clone)]
 pub enum Selector {
@@ -1082,20 +942,10 @@ impl ComponentType for Selector {
                     VariantCase::new("id", Some(ValueType::String)),
                     VariantCase::new("class", Some(ValueType::String)),
                     VariantCase::new("tag", Some(ValueType::String)),
-                    VariantCase::new(
-                        "attribute",
-                        Some(ValueType::Tuple(TupleType::new(
-                            None,
-                            [
-                                ValueType::String,
-                                ValueType::Option(OptionType::new(ValueType::String)),
-                            ],
-                        ))),
-                    ),
+                    VariantCase::new("attribute", Some(ValueType::Tuple(TupleType::new(None, [ValueType::String, ValueType::Option(OptionType::new(ValueType::String))])))),
                     VariantCase::new("complex", Some(ValueType::String)),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -1110,11 +960,7 @@ impl ComponentType for Selector {
             match case_name {
                 "id" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(Selector::Id(converted))
                     } else {
                         bail!("Expected payload for id case")
@@ -1122,11 +968,7 @@ impl ComponentType for Selector {
                 }
                 "class" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(Selector::Class(converted))
                     } else {
                         bail!("Expected payload for class case")
@@ -1134,11 +976,7 @@ impl ComponentType for Selector {
                 }
                 "tag" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(Selector::Tag(converted))
                     } else {
                         bail!("Expected payload for tag case")
@@ -1154,11 +992,7 @@ impl ComponentType for Selector {
                 }
                 "complex" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(Selector::Complex(converted))
                     } else {
                         bail!("Expected payload for complex case")
@@ -1178,20 +1012,10 @@ impl ComponentType for Selector {
                 VariantCase::new("id", Some(ValueType::String)),
                 VariantCase::new("class", Some(ValueType::String)),
                 VariantCase::new("tag", Some(ValueType::String)),
-                VariantCase::new(
-                    "attribute",
-                    Some(ValueType::Tuple(TupleType::new(
-                        None,
-                        [
-                            ValueType::String,
-                            ValueType::Option(OptionType::new(ValueType::String)),
-                        ],
-                    ))),
-                ),
+                VariantCase::new("attribute", Some(ValueType::Tuple(TupleType::new(None, [ValueType::String, ValueType::Option(OptionType::new(ValueType::String))])))),
                 VariantCase::new("complex", Some(ValueType::String)),
             ],
-        )
-        .unwrap();
+        ).unwrap();
 
         let (discriminant, payload) = match self {
             Selector::Id(val) => (0, Some(Value::String(val.into()))),
@@ -1219,9 +1043,11 @@ impl ComponentType for ElementAttribute {
         ValueType::Record(
             RecordType::new(
                 None,
-                [("name", ValueType::String), ("value", ValueType::String)],
-            )
-            .unwrap(),
+                [
+                    ("name", ValueType::String),
+                    ("value", ValueType::String),
+                ],
+            ).unwrap(),
         )
     }
 
@@ -1234,18 +1060,13 @@ impl ComponentType for ElementAttribute {
                 .field("value")
                 .ok_or_else(|| anyhow!("Missing 'value' field"))?;
 
-            let name = if let Value::String(s) = name {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
-            let value = if let Value::String(s) = value {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let name = if let Value::String(s) = name { s.to_string() } else { bail!("Expected string") };
+            let value = if let Value::String(s) = value { s.to_string() } else { bail!("Expected string") };
 
-            Ok(ElementAttribute { name, value })
+            Ok(ElementAttribute {
+                name,
+                value,
+            })
         } else {
             bail!("Expected Record value")
         }
@@ -1255,9 +1076,11 @@ impl ComponentType for ElementAttribute {
         let record = Record::new(
             RecordType::new(
                 None,
-                [("name", ValueType::String), ("value", ValueType::String)],
-            )
-            .unwrap(),
+                [
+                    ("name", ValueType::String),
+                    ("value", ValueType::String),
+                ],
+            ).unwrap(),
             [
                 ("name", Value::String(self.name.into())),
                 ("value", Value::String(self.value.into())),
@@ -1286,8 +1109,7 @@ impl ComponentType for ElementStyle {
                     ("value", ValueType::String),
                     ("important", ValueType::Bool),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -1303,21 +1125,9 @@ impl ComponentType for ElementStyle {
                 .field("important")
                 .ok_or_else(|| anyhow!("Missing 'important' field"))?;
 
-            let property = if let Value::String(s) = property {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
-            let value = if let Value::String(s) = value {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
-            let important = if let Value::Bool(x) = important {
-                x
-            } else {
-                bail!("Expected bool")
-            };
+            let property = if let Value::String(s) = property { s.to_string() } else { bail!("Expected string") };
+            let value = if let Value::String(s) = value { s.to_string() } else { bail!("Expected string") };
+            let important = if let Value::Bool(x) = important { x } else { bail!("Expected bool") };
 
             Ok(ElementStyle {
                 property,
@@ -1338,8 +1148,7 @@ impl ComponentType for ElementStyle {
                     ("value", ValueType::String),
                     ("important", ValueType::Bool),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("property", Value::String(self.property.into())),
                 ("value", Value::String(self.value.into())),
@@ -1351,6 +1160,8 @@ impl ComponentType for ElementStyle {
 }
 
 impl UnaryComponentType for ElementStyle {}
+
+
 
 #[derive(Debug, Clone)]
 pub struct DomElement {
@@ -1375,28 +1186,15 @@ impl ComponentType for DomElement {
                     ("tag-name", ValueType::String),
                     ("id", ValueType::Option(OptionType::new(ValueType::String))),
                     ("classes", ValueType::List(ListType::new(ValueType::String))),
-                    (
-                        "attributes",
-                        ValueType::List(ListType::new(ElementAttribute::ty())),
-                    ),
+                    ("attributes", ValueType::List(ListType::new(ElementAttribute::ty()))),
                     ("styles", ValueType::List(ListType::new(ElementStyle::ty()))),
-                    (
-                        "text-content",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
-                    (
-                        "inner-html",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
-                    (
-                        "parent-path",
-                        ValueType::List(ListType::new(ValueType::String)),
-                    ),
+                    ("text-content", ValueType::Option(OptionType::new(ValueType::String))),
+                    ("inner-html", ValueType::Option(OptionType::new(ValueType::String))),
+                    ("parent-path", ValueType::List(ListType::new(ValueType::String))),
                     ("has-children", ValueType::Bool),
                     ("child-count", ValueType::U32),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -1433,11 +1231,7 @@ impl ComponentType for DomElement {
                 .field("child-count")
                 .ok_or_else(|| anyhow!("Missing 'child-count' field"))?;
 
-            let tag_name = if let Value::String(s) = tag_name {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let tag_name = if let Value::String(s) = tag_name { s.to_string() } else { bail!("Expected string") };
             let id = Option::<String>::from_value(&id)?;
             let classes = Vec::<String>::from_value(&classes)?;
             let attributes = Vec::<ElementAttribute>::from_value(&attributes)?;
@@ -1445,16 +1239,8 @@ impl ComponentType for DomElement {
             let text_content = Option::<String>::from_value(&text_content)?;
             let inner_html = Option::<String>::from_value(&inner_html)?;
             let parent_path = Vec::<String>::from_value(&parent_path)?;
-            let has_children = if let Value::Bool(x) = has_children {
-                x
-            } else {
-                bail!("Expected bool")
-            };
-            let child_count = if let Value::U32(x) = child_count {
-                x
-            } else {
-                bail!("Expected u32")
-            };
+            let has_children = if let Value::Bool(x) = has_children { x } else { bail!("Expected bool") };
+            let child_count = if let Value::U32(x) = child_count { x } else { bail!("Expected u32") };
 
             Ok(DomElement {
                 tag_name,
@@ -1481,28 +1267,15 @@ impl ComponentType for DomElement {
                     ("tag-name", ValueType::String),
                     ("id", ValueType::Option(OptionType::new(ValueType::String))),
                     ("classes", ValueType::List(ListType::new(ValueType::String))),
-                    (
-                        "attributes",
-                        ValueType::List(ListType::new(ElementAttribute::ty())),
-                    ),
+                    ("attributes", ValueType::List(ListType::new(ElementAttribute::ty()))),
                     ("styles", ValueType::List(ListType::new(ElementStyle::ty()))),
-                    (
-                        "text-content",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
-                    (
-                        "inner-html",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
-                    (
-                        "parent-path",
-                        ValueType::List(ListType::new(ValueType::String)),
-                    ),
+                    ("text-content", ValueType::Option(OptionType::new(ValueType::String))),
+                    ("inner-html", ValueType::Option(OptionType::new(ValueType::String))),
+                    ("parent-path", ValueType::List(ListType::new(ValueType::String))),
                     ("has-children", ValueType::Bool),
                     ("child-count", ValueType::U32),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("tag-name", Value::String(self.tag_name.into())),
                 ("id", self.id.into_value()?),
@@ -1522,6 +1295,10 @@ impl ComponentType for DomElement {
 
 impl UnaryComponentType for DomElement {}
 
+
+
+
+
 #[derive(Debug, Clone)]
 pub struct ScrapeTarget {
     pub url: String,
@@ -1540,19 +1317,12 @@ impl ComponentType for ScrapeTarget {
                 [
                     ("url", ValueType::String),
                     ("selectors", ValueType::List(ListType::new(Selector::ty()))),
-                    (
-                        "required-fields",
-                        ValueType::List(ListType::new(ValueType::String)),
-                    ),
+                    ("required-fields", ValueType::List(ListType::new(ValueType::String))),
                     ("follow-links", ValueType::Bool),
                     ("max-depth", ValueType::U32),
-                    (
-                        "delay-ms",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("delay-ms", ValueType::Option(OptionType::new(ValueType::U32))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -1577,23 +1347,11 @@ impl ComponentType for ScrapeTarget {
                 .field("delay-ms")
                 .ok_or_else(|| anyhow!("Missing 'delay-ms' field"))?;
 
-            let url = if let Value::String(s) = url {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let url = if let Value::String(s) = url { s.to_string() } else { bail!("Expected string") };
             let selectors = Vec::<Selector>::from_value(&selectors)?;
             let required_fields = Vec::<String>::from_value(&required_fields)?;
-            let follow_links = if let Value::Bool(x) = follow_links {
-                x
-            } else {
-                bail!("Expected bool")
-            };
-            let max_depth = if let Value::U32(x) = max_depth {
-                x
-            } else {
-                bail!("Expected u32")
-            };
+            let follow_links = if let Value::Bool(x) = follow_links { x } else { bail!("Expected bool") };
+            let max_depth = if let Value::U32(x) = max_depth { x } else { bail!("Expected u32") };
             let delay_ms = Option::<u32>::from_value(&delay_ms)?;
 
             Ok(ScrapeTarget {
@@ -1616,19 +1374,12 @@ impl ComponentType for ScrapeTarget {
                 [
                     ("url", ValueType::String),
                     ("selectors", ValueType::List(ListType::new(Selector::ty()))),
-                    (
-                        "required-fields",
-                        ValueType::List(ListType::new(ValueType::String)),
-                    ),
+                    ("required-fields", ValueType::List(ListType::new(ValueType::String))),
                     ("follow-links", ValueType::Bool),
                     ("max-depth", ValueType::U32),
-                    (
-                        "delay-ms",
-                        ValueType::Option(OptionType::new(ValueType::U32)),
-                    ),
+                    ("delay-ms", ValueType::Option(OptionType::new(ValueType::U32))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("url", Value::String(self.url.into())),
                 ("selectors", self.selectors.into_value()?),
@@ -1660,19 +1411,12 @@ impl ComponentType for ImageData {
                 None,
                 [
                     ("url", ValueType::String),
-                    (
-                        "alt-text",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
+                    ("alt-text", ValueType::Option(OptionType::new(ValueType::String))),
                     ("width", ValueType::Option(OptionType::new(ValueType::U32))),
                     ("height", ValueType::Option(OptionType::new(ValueType::U32))),
-                    (
-                        "format",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
+                    ("format", ValueType::Option(OptionType::new(ValueType::String))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -1694,11 +1438,7 @@ impl ComponentType for ImageData {
                 .field("format")
                 .ok_or_else(|| anyhow!("Missing 'format' field"))?;
 
-            let url = if let Value::String(s) = url {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let url = if let Value::String(s) = url { s.to_string() } else { bail!("Expected string") };
             let alt_text = Option::<String>::from_value(&alt_text)?;
             let width = Option::<u32>::from_value(&width)?;
             let height = Option::<u32>::from_value(&height)?;
@@ -1722,19 +1462,12 @@ impl ComponentType for ImageData {
                 None,
                 [
                     ("url", ValueType::String),
-                    (
-                        "alt-text",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
+                    ("alt-text", ValueType::Option(OptionType::new(ValueType::String))),
                     ("width", ValueType::Option(OptionType::new(ValueType::U32))),
                     ("height", ValueType::Option(OptionType::new(ValueType::U32))),
-                    (
-                        "format",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
+                    ("format", ValueType::Option(OptionType::new(ValueType::String))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("url", Value::String(self.url.into())),
                 ("alt-text", self.alt_text.into_value()?),
@@ -1770,15 +1503,9 @@ impl ComponentType for ExtractedValue {
                     VariantCase::new("boolean", Some(ValueType::Bool)),
                     VariantCase::new("url", Some(ValueType::String)),
                     VariantCase::new("image", Some(ImageData::ty())),
-                    VariantCase::new(
-                        "structured",
-                        Some(ValueType::List(ListType::new(ValueType::Tuple(
-                            TupleType::new(None, [ValueType::String, ValueType::String]),
-                        )))),
-                    ),
+                    VariantCase::new("structured", Some(ValueType::List(ListType::new(ValueType::Tuple(TupleType::new(None, [ValueType::String, ValueType::String])))))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -1793,11 +1520,7 @@ impl ComponentType for ExtractedValue {
             match case_name {
                 "text" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(ExtractedValue::Text(converted))
                     } else {
                         bail!("Expected payload for text case")
@@ -1805,11 +1528,7 @@ impl ComponentType for ExtractedValue {
                 }
                 "number" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::F64(x) = payload_value {
-                            x
-                        } else {
-                            bail!("Expected f64")
-                        };
+                        let converted = if let Value::F64(x) = payload_value { x } else { bail!("Expected f64") };
                         Ok(ExtractedValue::Number(converted))
                     } else {
                         bail!("Expected payload for number case")
@@ -1817,11 +1536,7 @@ impl ComponentType for ExtractedValue {
                 }
                 "boolean" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::Bool(x) = payload_value {
-                            x
-                        } else {
-                            bail!("Expected bool")
-                        };
+                        let converted = if let Value::Bool(x) = payload_value { x } else { bail!("Expected bool") };
                         Ok(ExtractedValue::Boolean(converted))
                     } else {
                         bail!("Expected payload for boolean case")
@@ -1829,11 +1544,7 @@ impl ComponentType for ExtractedValue {
                 }
                 "url" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(ExtractedValue::Url(converted))
                     } else {
                         bail!("Expected payload for url case")
@@ -1871,15 +1582,9 @@ impl ComponentType for ExtractedValue {
                 VariantCase::new("boolean", Some(ValueType::Bool)),
                 VariantCase::new("url", Some(ValueType::String)),
                 VariantCase::new("image", Some(ImageData::ty())),
-                VariantCase::new(
-                    "structured",
-                    Some(ValueType::List(ListType::new(ValueType::Tuple(
-                        TupleType::new(None, [ValueType::String, ValueType::String]),
-                    )))),
-                ),
+                VariantCase::new("structured", Some(ValueType::List(ListType::new(ValueType::Tuple(TupleType::new(None, [ValueType::String, ValueType::String])))))),
             ],
-        )
-        .unwrap();
+        ).unwrap();
 
         let (discriminant, payload) = match self {
             ExtractedValue::Text(val) => (0, Some(Value::String(val.into()))),
@@ -1915,14 +1620,10 @@ impl ComponentType for ExtractedData {
                     ("field-name", ValueType::String),
                     ("value", ExtractedValue::ty()),
                     ("source-url", ValueType::String),
-                    (
-                        "xpath",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
+                    ("xpath", ValueType::Option(OptionType::new(ValueType::String))),
                     ("confidence", ValueType::F32),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -1944,23 +1645,11 @@ impl ComponentType for ExtractedData {
                 .field("confidence")
                 .ok_or_else(|| anyhow!("Missing 'confidence' field"))?;
 
-            let field_name = if let Value::String(s) = field_name {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let field_name = if let Value::String(s) = field_name { s.to_string() } else { bail!("Expected string") };
             let value = ExtractedValue::from_value(&value)?;
-            let source_url = if let Value::String(s) = source_url {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let source_url = if let Value::String(s) = source_url { s.to_string() } else { bail!("Expected string") };
             let xpath = Option::<String>::from_value(&xpath)?;
-            let confidence = if let Value::F32(x) = confidence {
-                x
-            } else {
-                bail!("Expected f32")
-            };
+            let confidence = if let Value::F32(x) = confidence { x } else { bail!("Expected f32") };
 
             Ok(ExtractedData {
                 field_name,
@@ -1982,14 +1671,10 @@ impl ComponentType for ExtractedData {
                     ("field-name", ValueType::String),
                     ("value", ExtractedValue::ty()),
                     ("source-url", ValueType::String),
-                    (
-                        "xpath",
-                        ValueType::Option(OptionType::new(ValueType::String)),
-                    ),
+                    ("xpath", ValueType::Option(OptionType::new(ValueType::String))),
                     ("confidence", ValueType::F32),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("field-name", Value::String(self.field_name.into())),
                 ("value", self.value.into_value()?),
@@ -2017,21 +1702,15 @@ pub enum ErrorType {
 
 impl ComponentType for ErrorType {
     fn ty() -> ValueType {
-        ValueType::Enum(
-            EnumType::new(
-                None,
-                [
-                    "network",
-                    "parsing",
-                    "selector",
-                    "timeout",
-                    "rate-limit",
-                    "authentication",
-                    "unknown",
-                ],
-            )
-            .unwrap(),
-        )
+        ValueType::Enum(EnumType::new(None, [
+            "network",
+            "parsing",
+            "selector",
+            "timeout",
+            "rate-limit",
+            "authentication",
+            "unknown",
+        ]).unwrap())
     }
 
     fn from_value(value: &Value) -> Result<Self> {
@@ -2053,19 +1732,15 @@ impl ComponentType for ErrorType {
     }
 
     fn into_value(self) -> Result<Value> {
-        let enum_type = EnumType::new(
-            None,
-            [
-                "network",
-                "parsing",
-                "selector",
-                "timeout",
-                "rate-limit",
-                "authentication",
-                "unknown",
-            ],
-        )
-        .unwrap();
+        let enum_type = EnumType::new(None, [
+            "network",
+            "parsing",
+            "selector",
+            "timeout",
+            "rate-limit",
+            "authentication",
+            "unknown",
+        ]).unwrap();
 
         let discriminant = match self {
             ErrorType::Network => 0,
@@ -2104,8 +1779,7 @@ impl ComponentType for ScrapeError {
                     ("timestamp", ValueType::U64),
                     ("recoverable", ValueType::Bool),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -2128,22 +1802,10 @@ impl ComponentType for ScrapeError {
                 .ok_or_else(|| anyhow!("Missing 'recoverable' field"))?;
 
             let error_type = ErrorType::from_value(&error_type)?;
-            let message = if let Value::String(s) = message {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let message = if let Value::String(s) = message { s.to_string() } else { bail!("Expected string") };
             let url = Option::<String>::from_value(&url)?;
-            let timestamp = if let Value::U64(x) = timestamp {
-                x
-            } else {
-                bail!("Expected u64")
-            };
-            let recoverable = if let Value::Bool(x) = recoverable {
-                x
-            } else {
-                bail!("Expected bool")
-            };
+            let timestamp = if let Value::U64(x) = timestamp { x } else { bail!("Expected u64") };
+            let recoverable = if let Value::Bool(x) = recoverable { x } else { bail!("Expected bool") };
 
             Ok(ScrapeError {
                 error_type,
@@ -2168,8 +1830,7 @@ impl ComponentType for ScrapeError {
                     ("timestamp", ValueType::U64),
                     ("recoverable", ValueType::Bool),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("error-type", self.error_type.into_value()?),
                 ("message", Value::String(self.message.into())),
@@ -2209,8 +1870,7 @@ impl ComponentType for ScrapeMetadata {
                     ("cache-hits", ValueType::U32),
                     ("retry-count", ValueType::U32),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -2238,41 +1898,13 @@ impl ComponentType for ScrapeMetadata {
                 .field("retry-count")
                 .ok_or_else(|| anyhow!("Missing 'retry-count' field"))?;
 
-            let start_time = if let Value::U64(x) = start_time {
-                x
-            } else {
-                bail!("Expected u64")
-            };
-            let end_time = if let Value::U64(x) = end_time {
-                x
-            } else {
-                bail!("Expected u64")
-            };
-            let duration_ms = if let Value::U32(x) = duration_ms {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let pages_visited = if let Value::U32(x) = pages_visited {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let elements_extracted = if let Value::U32(x) = elements_extracted {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let cache_hits = if let Value::U32(x) = cache_hits {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let retry_count = if let Value::U32(x) = retry_count {
-                x
-            } else {
-                bail!("Expected u32")
-            };
+            let start_time = if let Value::U64(x) = start_time { x } else { bail!("Expected u64") };
+            let end_time = if let Value::U64(x) = end_time { x } else { bail!("Expected u64") };
+            let duration_ms = if let Value::U32(x) = duration_ms { x } else { bail!("Expected u32") };
+            let pages_visited = if let Value::U32(x) = pages_visited { x } else { bail!("Expected u32") };
+            let elements_extracted = if let Value::U32(x) = elements_extracted { x } else { bail!("Expected u32") };
+            let cache_hits = if let Value::U32(x) = cache_hits { x } else { bail!("Expected u32") };
+            let retry_count = if let Value::U32(x) = retry_count { x } else { bail!("Expected u32") };
 
             Ok(ScrapeMetadata {
                 start_time,
@@ -2301,8 +1933,7 @@ impl ComponentType for ScrapeMetadata {
                     ("cache-hits", ValueType::U32),
                     ("retry-count", ValueType::U32),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("start-time", Value::U64(self.start_time)),
                 ("end-time", Value::U64(self.end_time)),
@@ -2318,6 +1949,8 @@ impl ComponentType for ScrapeMetadata {
 }
 
 impl UnaryComponentType for ScrapeMetadata {}
+
+
 
 #[derive(Debug, Clone)]
 pub struct ScrapingResult {
@@ -2340,8 +1973,7 @@ impl ComponentType for ScrapingResult {
                     ("metadata", ScrapeMetadata::ty()),
                     ("has-related-results", ValueType::Bool),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -2367,11 +1999,7 @@ impl ComponentType for ScrapingResult {
             let data = Vec::<ExtractedData>::from_value(&data)?;
             let errors = Vec::<ScrapeError>::from_value(&errors)?;
             let metadata = ScrapeMetadata::from_value(&metadata)?;
-            let has_related_results = if let Value::Bool(x) = has_related_results {
-                x
-            } else {
-                bail!("Expected bool")
-            };
+            let has_related_results = if let Value::Bool(x) = has_related_results { x } else { bail!("Expected bool") };
 
             Ok(ScrapingResult {
                 target,
@@ -2396,8 +2024,7 @@ impl ComponentType for ScrapingResult {
                     ("metadata", ScrapeMetadata::ty()),
                     ("has-related-results", ValueType::Bool),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("target", self.target.into_value()?),
                 ("data", self.data.into_value()?),
@@ -2411,6 +2038,8 @@ impl ComponentType for ScrapingResult {
 }
 
 impl UnaryComponentType for ScrapingResult {}
+
+
 
 #[derive(Debug, Clone)]
 pub struct ScrapeStatistics {
@@ -2435,16 +2064,9 @@ impl ComponentType for ScrapeStatistics {
                     ("total-data-extracted", ValueType::U32),
                     ("average-response-time-ms", ValueType::F32),
                     ("cache-hit-rate", ValueType::F32),
-                    (
-                        "error-breakdown",
-                        ValueType::List(ListType::new(ValueType::Tuple(TupleType::new(
-                            None,
-                            [ErrorType::ty(), ValueType::U32],
-                        )))),
-                    ),
+                    ("error-breakdown", ValueType::List(ListType::new(ValueType::Tuple(TupleType::new(None, [ErrorType::ty(), ValueType::U32]))))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -2472,36 +2094,12 @@ impl ComponentType for ScrapeStatistics {
                 .field("error-breakdown")
                 .ok_or_else(|| anyhow!("Missing 'error-breakdown' field"))?;
 
-            let total_requests = if let Value::U32(x) = total_requests {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let successful_requests = if let Value::U32(x) = successful_requests {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let failed_requests = if let Value::U32(x) = failed_requests {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let total_data_extracted = if let Value::U32(x) = total_data_extracted {
-                x
-            } else {
-                bail!("Expected u32")
-            };
-            let average_response_time_ms = if let Value::F32(x) = average_response_time_ms {
-                x
-            } else {
-                bail!("Expected f32")
-            };
-            let cache_hit_rate = if let Value::F32(x) = cache_hit_rate {
-                x
-            } else {
-                bail!("Expected f32")
-            };
+            let total_requests = if let Value::U32(x) = total_requests { x } else { bail!("Expected u32") };
+            let successful_requests = if let Value::U32(x) = successful_requests { x } else { bail!("Expected u32") };
+            let failed_requests = if let Value::U32(x) = failed_requests { x } else { bail!("Expected u32") };
+            let total_data_extracted = if let Value::U32(x) = total_data_extracted { x } else { bail!("Expected u32") };
+            let average_response_time_ms = if let Value::F32(x) = average_response_time_ms { x } else { bail!("Expected f32") };
+            let cache_hit_rate = if let Value::F32(x) = cache_hit_rate { x } else { bail!("Expected f32") };
             let error_breakdown = Vec::<(ErrorType, u32)>::from_value(&error_breakdown)?;
 
             Ok(ScrapeStatistics {
@@ -2529,28 +2127,15 @@ impl ComponentType for ScrapeStatistics {
                     ("total-data-extracted", ValueType::U32),
                     ("average-response-time-ms", ValueType::F32),
                     ("cache-hit-rate", ValueType::F32),
-                    (
-                        "error-breakdown",
-                        ValueType::List(ListType::new(ValueType::Tuple(TupleType::new(
-                            None,
-                            [ErrorType::ty(), ValueType::U32],
-                        )))),
-                    ),
+                    ("error-breakdown", ValueType::List(ListType::new(ValueType::Tuple(TupleType::new(None, [ErrorType::ty(), ValueType::U32]))))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("total-requests", Value::U32(self.total_requests)),
                 ("successful-requests", Value::U32(self.successful_requests)),
                 ("failed-requests", Value::U32(self.failed_requests)),
-                (
-                    "total-data-extracted",
-                    Value::U32(self.total_data_extracted),
-                ),
-                (
-                    "average-response-time-ms",
-                    Value::F32(self.average_response_time_ms),
-                ),
+                ("total-data-extracted", Value::U32(self.total_data_extracted)),
+                ("average-response-time-ms", Value::F32(self.average_response_time_ms)),
                 ("cache-hit-rate", Value::F32(self.cache_hit_rate)),
                 ("error-breakdown", self.error_breakdown.into_value()?),
             ],
@@ -2590,8 +2175,7 @@ impl ComponentType for TransformOperation {
                     VariantCase::new("regex", Some(ValueType::String)),
                     VariantCase::new("custom", Some(ValueType::String)),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -2613,11 +2197,7 @@ impl ComponentType for TransformOperation {
                 "uppercase" => Ok(TransformOperation::Uppercase),
                 "regex" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(TransformOperation::Regex(converted))
                     } else {
                         bail!("Expected payload for regex case")
@@ -2625,11 +2205,7 @@ impl ComponentType for TransformOperation {
                 }
                 "custom" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(TransformOperation::Custom(converted))
                     } else {
                         bail!("Expected payload for custom case")
@@ -2656,8 +2232,7 @@ impl ComponentType for TransformOperation {
                 VariantCase::new("regex", Some(ValueType::String)),
                 VariantCase::new("custom", Some(ValueType::String)),
             ],
-        )
-        .unwrap();
+        ).unwrap();
 
         let (discriminant, payload) = match self {
             TransformOperation::ExtractText => (0, None),
@@ -2707,8 +2282,7 @@ impl ComponentType for FilterCondition {
                     VariantCase::new("is-empty", None),
                     VariantCase::new("is-not-empty", None),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -2723,11 +2297,7 @@ impl ComponentType for FilterCondition {
             match case_name {
                 "equals" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(FilterCondition::Equals(converted))
                     } else {
                         bail!("Expected payload for equals case")
@@ -2735,11 +2305,7 @@ impl ComponentType for FilterCondition {
                 }
                 "contains" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(FilterCondition::Contains(converted))
                     } else {
                         bail!("Expected payload for contains case")
@@ -2747,11 +2313,7 @@ impl ComponentType for FilterCondition {
                 }
                 "starts-with" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(FilterCondition::StartsWith(converted))
                     } else {
                         bail!("Expected payload for starts-with case")
@@ -2759,11 +2321,7 @@ impl ComponentType for FilterCondition {
                 }
                 "ends-with" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(FilterCondition::EndsWith(converted))
                     } else {
                         bail!("Expected payload for ends-with case")
@@ -2771,11 +2329,7 @@ impl ComponentType for FilterCondition {
                 }
                 "matches-regex" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::String(s) = payload_value {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let converted = if let Value::String(s) = payload_value { s.to_string() } else { bail!("Expected string") };
                         Ok(FilterCondition::MatchesRegex(converted))
                     } else {
                         bail!("Expected payload for matches-regex case")
@@ -2783,11 +2337,7 @@ impl ComponentType for FilterCondition {
                 }
                 "greater-than" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::F64(x) = payload_value {
-                            x
-                        } else {
-                            bail!("Expected f64")
-                        };
+                        let converted = if let Value::F64(x) = payload_value { x } else { bail!("Expected f64") };
                         Ok(FilterCondition::GreaterThan(converted))
                     } else {
                         bail!("Expected payload for greater-than case")
@@ -2795,11 +2345,7 @@ impl ComponentType for FilterCondition {
                 }
                 "less-than" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::F64(x) = payload_value {
-                            x
-                        } else {
-                            bail!("Expected f64")
-                        };
+                        let converted = if let Value::F64(x) = payload_value { x } else { bail!("Expected f64") };
                         Ok(FilterCondition::LessThan(converted))
                     } else {
                         bail!("Expected payload for less-than case")
@@ -2828,8 +2374,7 @@ impl ComponentType for FilterCondition {
                 VariantCase::new("is-empty", None),
                 VariantCase::new("is-not-empty", None),
             ],
-        )
-        .unwrap();
+        ).unwrap();
 
         let (discriminant, payload) = match self {
             FilterCondition::Equals(val) => (0, Some(Value::String(val.into()))),
@@ -2865,8 +2410,7 @@ impl ComponentType for FilterRule {
                     ("field", ValueType::String),
                     ("condition", FilterCondition::ty()),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -2879,14 +2423,13 @@ impl ComponentType for FilterRule {
                 .field("condition")
                 .ok_or_else(|| anyhow!("Missing 'condition' field"))?;
 
-            let field = if let Value::String(s) = field {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let field = if let Value::String(s) = field { s.to_string() } else { bail!("Expected string") };
             let condition = FilterCondition::from_value(&condition)?;
 
-            Ok(FilterRule { field, condition })
+            Ok(FilterRule {
+                field,
+                condition,
+            })
         } else {
             bail!("Expected Record value")
         }
@@ -2900,8 +2443,7 @@ impl ComponentType for FilterRule {
                     ("field", ValueType::String),
                     ("condition", FilterCondition::ty()),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("field", Value::String(self.field.into())),
                 ("condition", self.condition.into_value()?),
@@ -2927,22 +2469,16 @@ pub enum ValidationType {
 
 impl ComponentType for ValidationType {
     fn ty() -> ValueType {
-        ValueType::Enum(
-            EnumType::new(
-                None,
-                [
-                    "required",
-                    "email",
-                    "url",
-                    "numeric",
-                    "date",
-                    "length-min",
-                    "length-max",
-                    "pattern",
-                ],
-            )
-            .unwrap(),
-        )
+        ValueType::Enum(EnumType::new(None, [
+            "required",
+            "email",
+            "url",
+            "numeric",
+            "date",
+            "length-min",
+            "length-max",
+            "pattern",
+        ]).unwrap())
     }
 
     fn from_value(value: &Value) -> Result<Self> {
@@ -2965,20 +2501,16 @@ impl ComponentType for ValidationType {
     }
 
     fn into_value(self) -> Result<Value> {
-        let enum_type = EnumType::new(
-            None,
-            [
-                "required",
-                "email",
-                "url",
-                "numeric",
-                "date",
-                "length-min",
-                "length-max",
-                "pattern",
-            ],
-        )
-        .unwrap();
+        let enum_type = EnumType::new(None, [
+            "required",
+            "email",
+            "url",
+            "numeric",
+            "date",
+            "length-min",
+            "length-max",
+            "pattern",
+        ]).unwrap();
 
         let discriminant = match self {
             ValidationType::Required => 0,
@@ -3014,8 +2546,7 @@ impl ComponentType for ValidationRule {
                     ("rule-type", ValidationType::ty()),
                     ("error-message", ValueType::String),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -3031,17 +2562,9 @@ impl ComponentType for ValidationRule {
                 .field("error-message")
                 .ok_or_else(|| anyhow!("Missing 'error-message' field"))?;
 
-            let field = if let Value::String(s) = field {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let field = if let Value::String(s) = field { s.to_string() } else { bail!("Expected string") };
             let rule_type = ValidationType::from_value(&rule_type)?;
-            let error_message = if let Value::String(s) = error_message {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let error_message = if let Value::String(s) = error_message { s.to_string() } else { bail!("Expected string") };
 
             Ok(ValidationRule {
                 field,
@@ -3062,8 +2585,7 @@ impl ComponentType for ValidationRule {
                     ("rule-type", ValidationType::ty()),
                     ("error-message", ValueType::String),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("field", Value::String(self.field.into())),
                 ("rule-type", self.rule_type.into_value()?),
@@ -3075,6 +2597,9 @@ impl ComponentType for ValidationRule {
 }
 
 impl UnaryComponentType for ValidationRule {}
+
+
+
 
 #[derive(Debug, Clone)]
 pub struct PipelineStage {
@@ -3091,18 +2616,11 @@ impl ComponentType for PipelineStage {
                 None,
                 [
                     ("name", ValueType::String),
-                    (
-                        "transforms",
-                        ValueType::List(ListType::new(TransformOperation::ty())),
-                    ),
+                    ("transforms", ValueType::List(ListType::new(TransformOperation::ty()))),
                     ("filters", ValueType::List(ListType::new(FilterRule::ty()))),
-                    (
-                        "validators",
-                        ValueType::List(ListType::new(ValidationRule::ty())),
-                    ),
+                    ("validators", ValueType::List(ListType::new(ValidationRule::ty()))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -3121,11 +2639,7 @@ impl ComponentType for PipelineStage {
                 .field("validators")
                 .ok_or_else(|| anyhow!("Missing 'validators' field"))?;
 
-            let name = if let Value::String(s) = name {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let name = if let Value::String(s) = name { s.to_string() } else { bail!("Expected string") };
             let transforms = Vec::<TransformOperation>::from_value(&transforms)?;
             let filters = Vec::<FilterRule>::from_value(&filters)?;
             let validators = Vec::<ValidationRule>::from_value(&validators)?;
@@ -3147,18 +2661,11 @@ impl ComponentType for PipelineStage {
                 None,
                 [
                     ("name", ValueType::String),
-                    (
-                        "transforms",
-                        ValueType::List(ListType::new(TransformOperation::ty())),
-                    ),
+                    ("transforms", ValueType::List(ListType::new(TransformOperation::ty()))),
                     ("filters", ValueType::List(ListType::new(FilterRule::ty()))),
-                    (
-                        "validators",
-                        ValueType::List(ListType::new(ValidationRule::ty())),
-                    ),
+                    ("validators", ValueType::List(ListType::new(ValidationRule::ty()))),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("name", Value::String(self.name.into())),
                 ("transforms", self.transforms.into_value()?),
@@ -3182,13 +2689,12 @@ pub enum ErrorHandlingStrategy {
 
 impl ComponentType for ErrorHandlingStrategy {
     fn ty() -> ValueType {
-        ValueType::Enum(
-            EnumType::new(
-                None,
-                ["fail-fast", "skip-errors", "collect-errors", "retry-failed"],
-            )
-            .unwrap(),
-        )
+        ValueType::Enum(EnumType::new(None, [
+            "fail-fast",
+            "skip-errors",
+            "collect-errors",
+            "retry-failed",
+        ]).unwrap())
     }
 
     fn from_value(value: &Value) -> Result<Self> {
@@ -3207,11 +2713,12 @@ impl ComponentType for ErrorHandlingStrategy {
     }
 
     fn into_value(self) -> Result<Value> {
-        let enum_type = EnumType::new(
-            None,
-            ["fail-fast", "skip-errors", "collect-errors", "retry-failed"],
-        )
-        .unwrap();
+        let enum_type = EnumType::new(None, [
+            "fail-fast",
+            "skip-errors",
+            "collect-errors",
+            "retry-failed",
+        ]).unwrap();
 
         let discriminant = match self {
             ErrorHandlingStrategy::FailFast => 0,
@@ -3236,7 +2743,12 @@ pub enum OutputFormat {
 
 impl ComponentType for OutputFormat {
     fn ty() -> ValueType {
-        ValueType::Enum(EnumType::new(None, ["json", "csv", "xml", "custom"]).unwrap())
+        ValueType::Enum(EnumType::new(None, [
+            "json",
+            "csv",
+            "xml",
+            "custom",
+        ]).unwrap())
     }
 
     fn from_value(value: &Value) -> Result<Self> {
@@ -3255,7 +2767,12 @@ impl ComponentType for OutputFormat {
     }
 
     fn into_value(self) -> Result<Value> {
-        let enum_type = EnumType::new(None, ["json", "csv", "xml", "custom"]).unwrap();
+        let enum_type = EnumType::new(None, [
+            "json",
+            "csv",
+            "xml",
+            "custom",
+        ]).unwrap();
 
         let discriminant = match self {
             OutputFormat::Json => 0,
@@ -3269,6 +2786,7 @@ impl ComponentType for OutputFormat {
 }
 
 impl UnaryComponentType for OutputFormat {}
+
 
 #[derive(Debug, Clone)]
 pub struct DataPipeline {
@@ -3285,15 +2803,11 @@ impl ComponentType for DataPipeline {
                 None,
                 [
                     ("name", ValueType::String),
-                    (
-                        "stages",
-                        ValueType::List(ListType::new(PipelineStage::ty())),
-                    ),
+                    ("stages", ValueType::List(ListType::new(PipelineStage::ty()))),
                     ("error-handling", ErrorHandlingStrategy::ty()),
                     ("output-format", OutputFormat::ty()),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
         )
     }
 
@@ -3312,11 +2826,7 @@ impl ComponentType for DataPipeline {
                 .field("output-format")
                 .ok_or_else(|| anyhow!("Missing 'output-format' field"))?;
 
-            let name = if let Value::String(s) = name {
-                s.to_string()
-            } else {
-                bail!("Expected string")
-            };
+            let name = if let Value::String(s) = name { s.to_string() } else { bail!("Expected string") };
             let stages = Vec::<PipelineStage>::from_value(&stages)?;
             let error_handling = ErrorHandlingStrategy::from_value(&error_handling)?;
             let output_format = OutputFormat::from_value(&output_format)?;
@@ -3338,15 +2848,11 @@ impl ComponentType for DataPipeline {
                 None,
                 [
                     ("name", ValueType::String),
-                    (
-                        "stages",
-                        ValueType::List(ListType::new(PipelineStage::ty())),
-                    ),
+                    ("stages", ValueType::List(ListType::new(PipelineStage::ty()))),
                     ("error-handling", ErrorHandlingStrategy::ty()),
                     ("output-format", OutputFormat::ty()),
                 ],
-            )
-            .unwrap(),
+            ).unwrap(),
             [
                 ("name", Value::String(self.name.into())),
                 ("stages", self.stages.into_value()?),
@@ -3360,6 +2866,23 @@ impl ComponentType for DataPipeline {
 
 impl UnaryComponentType for DataPipeline {}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ========== Host Imports ==========
 
 /// Host trait for interface: example:webscraper/http
@@ -3372,18 +2895,16 @@ pub trait HttpHost {
 /// Host trait for interface: example:webscraper/dom
 pub trait DomHost {
     fn parse_html(&mut self, html: String) -> Result<Vec<DomElement>, String>;
-    fn query_selector(
-        &mut self,
-        root: DomElement,
-        selector: Selector,
-    ) -> Result<Vec<DomElement>, String>;
+    fn query_selector(&mut self, root: DomElement, selector: Selector) -> Result<Vec<DomElement>, String>;
 }
 
 /// Host trait for interface: example:webscraper/scraper
-pub trait ScraperHost {}
+pub trait ScraperHost {
+}
 
 /// Host trait for interface: example:webscraper/pipeline
-pub trait PipelineHost {}
+pub trait PipelineHost {
+}
 
 pub mod imports {
     use super::*;
@@ -3402,11 +2923,8 @@ pub mod imports {
                 Func::new(
                     &mut *store,
                     FuncType::new(
-                        [HttpRequest::ty()],
-                        [ValueType::Result(ResultType::new(
-                            Some(HttpResponse::ty()),
-                            Some(ValueType::String),
-                        ))],
+                        [HttpRequest::ty(), ],
+                        [ValueType::Result(ResultType::new(Some(HttpResponse::ty()), Some(ValueType::String)))],
                     ),
                     |mut ctx, params, results| {
                         let request = HttpRequest::from_value(&params[0])?;
@@ -3423,13 +2941,12 @@ pub mod imports {
                 "log-info",
                 Func::new(
                     &mut *store,
-                    FuncType::new([ValueType::String], []),
+                    FuncType::new(
+                        [ValueType::String, ],
+                        [],
+                    ),
                     |mut ctx, params, _results| {
-                        let message = if let Value::String(s) = &params[0] {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let message = if let Value::String(s) = &params[0] { s.to_string() } else { bail!("Expected string") };
                         ctx.data_mut().log_info(message);
                         Ok(())
                     },
@@ -3442,13 +2959,12 @@ pub mod imports {
                 "log-error",
                 Func::new(
                     &mut *store,
-                    FuncType::new([ValueType::String], []),
+                    FuncType::new(
+                        [ValueType::String, ],
+                        [],
+                    ),
                     |mut ctx, params, _results| {
-                        let message = if let Value::String(s) = &params[0] {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let message = if let Value::String(s) = &params[0] { s.to_string() } else { bail!("Expected string") };
                         ctx.data_mut().log_error(message);
                         Ok(())
                     },
@@ -3473,18 +2989,11 @@ pub mod imports {
                 Func::new(
                     &mut *store,
                     FuncType::new(
-                        [ValueType::String],
-                        [ValueType::Result(ResultType::new(
-                            Some(ValueType::List(ListType::new(DomElement::ty()))),
-                            Some(ValueType::String),
-                        ))],
+                        [ValueType::String, ],
+                        [ValueType::Result(ResultType::new(Some(ValueType::List(ListType::new(DomElement::ty()))), Some(ValueType::String)))],
                     ),
                     |mut ctx, params, results| {
-                        let html = if let Value::String(s) = &params[0] {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let html = if let Value::String(s) = &params[0] { s.to_string() } else { bail!("Expected string") };
                         let result = ctx.data_mut().parse_html(html);
                         results[0] = result.into_value()?;
                         Ok(())
@@ -3499,11 +3008,8 @@ pub mod imports {
                 Func::new(
                     &mut *store,
                     FuncType::new(
-                        [DomElement::ty(), Selector::ty()],
-                        [ValueType::Result(ResultType::new(
-                            Some(ValueType::List(ListType::new(DomElement::ty()))),
-                            Some(ValueType::String),
-                        ))],
+                        [DomElement::ty(), Selector::ty(), ],
+                        [ValueType::Result(ResultType::new(Some(ValueType::List(ListType::new(DomElement::ty()))), Some(ValueType::String)))],
                     ),
                     |mut ctx, params, results| {
                         let root = DomElement::from_value(&params[0])?;
@@ -3540,6 +3046,7 @@ pub mod imports {
 
         Ok(())
     }
+
 }
 
 // ========== Guest Exports ==========
@@ -3549,15 +3056,11 @@ pub mod exports_exports {
 
     pub const INTERFACE_NAME: &str = "example:webscraper/exports";
 
+    #[allow(clippy::type_complexity)]
     pub fn get_scrape_website<T, E: backend::WasmEngine>(
         instance: &Instance,
         _store: &mut Store<T, E>,
-    ) -> Result<
-        TypedFunc<
-            (ScrapeTarget, Option<DataPipeline>, Vec<HttpHeader>),
-            Result<ScrapingResult, String>,
-        >,
-    > {
+    ) -> Result<TypedFunc<(ScrapeTarget, Option<DataPipeline>, Vec<HttpHeader>), Result<ScrapingResult, String>>> {
         let interface = instance
             .exports()
             .instance(&INTERFACE_NAME.try_into().unwrap())
@@ -3569,15 +3072,11 @@ pub mod exports_exports {
             .typed::<(ScrapeTarget, Option<DataPipeline>, Vec<HttpHeader>), Result<ScrapingResult, String>>()
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn get_scrape_batch<T, E: backend::WasmEngine>(
         instance: &Instance,
         _store: &mut Store<T, E>,
-    ) -> Result<
-        TypedFunc<
-            (Vec<ScrapeTarget>, Option<DataPipeline>),
-            Result<Vec<Result<ScrapingResult, String>>, String>,
-        >,
-    > {
+    ) -> Result<TypedFunc<(Vec<ScrapeTarget>, Option<DataPipeline>), Result<Vec<Result<ScrapingResult, String>>, String>>> {
         let interface = instance
             .exports()
             .instance(&INTERFACE_NAME.try_into().unwrap())
@@ -3589,6 +3088,7 @@ pub mod exports_exports {
             .typed::<(Vec<ScrapeTarget>, Option<DataPipeline>), Result<Vec<Result<ScrapingResult, String>>, String>>()
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn get_get_statistics<T, E: backend::WasmEngine>(
         instance: &Instance,
         _store: &mut Store<T, E>,
@@ -3604,11 +3104,11 @@ pub mod exports_exports {
             .typed::<(), ScrapeStatistics>()
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn get_process_data<T, E: backend::WasmEngine>(
         instance: &Instance,
         _store: &mut Store<T, E>,
-    ) -> Result<TypedFunc<(Vec<ExtractedData>, DataPipeline), Result<Vec<ExtractedData>, String>>>
-    {
+    ) -> Result<TypedFunc<(Vec<ExtractedData>, DataPipeline), Result<Vec<ExtractedData>, String>>> {
         let interface = instance
             .exports()
             .instance(&INTERFACE_NAME.try_into().unwrap())
@@ -3620,6 +3120,7 @@ pub mod exports_exports {
             .typed::<(Vec<ExtractedData>, DataPipeline), Result<Vec<ExtractedData>, String>>()
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn get_transform_response<T, E: backend::WasmEngine>(
         instance: &Instance,
         _store: &mut Store<T, E>,
@@ -3634,4 +3135,6 @@ pub mod exports_exports {
             .ok_or_else(|| anyhow!("Function 'transform-response' not found"))?
             .typed::<(HttpResponse, Vec<Selector>), Result<Vec<ExtractedData>, String>>()
     }
+
 }
+

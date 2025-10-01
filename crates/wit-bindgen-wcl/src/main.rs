@@ -48,7 +48,7 @@ fn find_default_world(resolve: &Resolve, package_id: wit_parser::PackageId) -> R
     let package = &resolve.packages[package_id];
 
     // Find the first world in the package
-    for (_name, world_id) in &package.worlds {
+    if let Some((_name, world_id)) = package.worlds.iter().next() {
         return Ok(*world_id);
     }
 
@@ -293,19 +293,16 @@ impl<'a> BindingsGenerator<'a> {
         writeln!(output)?;
 
         for (name, item) in &imports {
-            match item {
-                WorldItem::Interface { id: iface_id, .. } => {
-                    let iface = &self.resolve.interfaces[*iface_id];
-                    let name_str = self.resolve.name_world_key(name);
-                    generate_import_registration_function(
-                        self.resolve,
-                        &name_str,
-                        iface,
-                        *iface_id,
-                        output,
-                    )?;
-                }
-                _ => {}
+            if let WorldItem::Interface { id: iface_id, .. } = item {
+                let iface = &self.resolve.interfaces[*iface_id];
+                let name_str = self.resolve.name_world_key(name);
+                generate_import_registration_function(
+                    self.resolve,
+                    &name_str,
+                    iface,
+                    *iface_id,
+                    output,
+                )?;
             }
         }
 
