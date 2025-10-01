@@ -18,3 +18,5 @@ lto = true
 
 [package.metadata.component]
 package = "component:guest-resource"
+
+[workspace]
