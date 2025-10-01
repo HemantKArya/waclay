@@ -5,11 +5,9 @@
 
 use anyhow::*;
 use waclay::*;
-use wasm_runtime_layer::{backend};
-
+use wasm_runtime_layer::backend;
 
 // ========== Type Definitions ==========
-
 
 #[derive(Debug, Clone)]
 pub struct Rect {
@@ -26,7 +24,8 @@ impl ComponentType for Rect {
                     ("label", ValueType::String),
                     ("sides", ValueType::List(ListType::new(ValueType::S16))),
                 ],
-            ).unwrap(),
+            )
+            .unwrap(),
         )
     }
 
@@ -39,13 +38,14 @@ impl ComponentType for Rect {
                 .field("sides")
                 .ok_or_else(|| anyhow!("Missing 'sides' field"))?;
 
-            let label = if let Value::String(s) = label { s.to_string() } else { bail!("Expected string") };
+            let label = if let Value::String(s) = label {
+                s.to_string()
+            } else {
+                bail!("Expected string")
+            };
             let sides = Vec::<i16>::from_value(&sides)?;
 
-            Ok(Rect {
-                label,
-                sides,
-            })
+            Ok(Rect { label, sides })
         } else {
             bail!("Expected Record value")
         }
@@ -59,7 +59,8 @@ impl ComponentType for Rect {
                     ("label", ValueType::String),
                     ("sides", ValueType::List(ListType::new(ValueType::S16))),
                 ],
-            ).unwrap(),
+            )
+            .unwrap(),
             [
                 ("label", Value::String(self.label.into())),
                 ("sides", self.sides.into_value()?),
@@ -88,7 +89,8 @@ impl ComponentType for ClickType {
                     VariantCase::new("press", Some(ValueType::U8)),
                     VariantCase::new("down", None),
                 ],
-            ).unwrap(),
+            )
+            .unwrap(),
         )
     }
 
@@ -104,7 +106,11 @@ impl ComponentType for ClickType {
                 "up" => Ok(ClickType::Up),
                 "press" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::U8(x) = payload_value { x } else { bail!("Expected u8") };
+                        let converted = if let Value::U8(x) = payload_value {
+                            x
+                        } else {
+                            bail!("Expected u8")
+                        };
                         Ok(ClickType::Press(converted))
                     } else {
                         bail!("Expected payload for press case")
@@ -126,7 +132,8 @@ impl ComponentType for ClickType {
                 VariantCase::new("press", Some(ValueType::U8)),
                 VariantCase::new("down", None),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         let (discriminant, payload) = match self {
             ClickType::Up => (0, None),
@@ -158,7 +165,8 @@ impl ComponentType for Event {
                     VariantCase::new("close", Some(ValueType::U64)),
                     VariantCase::new("click", Some(ClickType::ty())),
                 ],
-            ).unwrap(),
+            )
+            .unwrap(),
         )
     }
 
@@ -174,7 +182,11 @@ impl ComponentType for Event {
                 "open" => Ok(Event::Open),
                 "close" => {
                     if let Some(payload_value) = payload {
-                        let converted = if let Value::U64(x) = payload_value { x } else { bail!("Expected u64") };
+                        let converted = if let Value::U64(x) = payload_value {
+                            x
+                        } else {
+                            bail!("Expected u64")
+                        };
                         Ok(Event::Close(converted))
                     } else {
                         bail!("Expected payload for close case")
@@ -203,7 +215,8 @@ impl ComponentType for Event {
                 VariantCase::new("close", Some(ValueType::U64)),
                 VariantCase::new("click", Some(ClickType::ty())),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         let (discriminant, payload) = match self {
             Event::Open => (0, None),
@@ -218,14 +231,6 @@ impl ComponentType for Event {
 
 impl UnaryComponentType for Event {}
 
-
-
-
-
-
-
-
-
 // ========== Host Imports ==========
 
 /// Host trait for interface: test:guest/host
@@ -237,7 +242,13 @@ pub trait HostHost {
     fn param_result_ok(&mut self, result_ok: Result<u8, ()>) -> ();
     fn param_result_err(&mut self, result_err: Result<(), u8>) -> ();
     fn param_result_none(&mut self, result_none: Result<(), ()>) -> ();
-    fn param_mult(&mut self, param_list: Vec<String>, param_record: Event, param_option: Option<String>, result_all: Result<String, String>) -> ();
+    fn param_mult(
+        &mut self,
+        param_list: Vec<String>,
+        param_record: Event,
+        param_option: Option<String>,
+        result_all: Result<String, String>,
+    ) -> ();
 }
 
 pub mod imports {
@@ -256,10 +267,7 @@ pub mod imports {
                 "param-list",
                 Func::new(
                     &mut *store,
-                    FuncType::new(
-                        [ValueType::List(ListType::new(ValueType::S16)), ],
-                        [],
-                    ),
+                    FuncType::new([ValueType::List(ListType::new(ValueType::S16))], []),
                     |mut ctx, params, _results| {
                         let param_s16 = Vec::<i16>::from_value(&params[0])?;
                         ctx.data_mut().param_list(param_s16);
@@ -274,10 +282,7 @@ pub mod imports {
                 "param-record",
                 Func::new(
                     &mut *store,
-                    FuncType::new(
-                        [Event::ty(), ],
-                        [],
-                    ),
+                    FuncType::new([Event::ty()], []),
                     |mut ctx, params, _results| {
                         let param_record = Event::from_value(&params[0])?;
                         ctx.data_mut().param_record(param_record);
@@ -292,10 +297,7 @@ pub mod imports {
                 "param-option",
                 Func::new(
                     &mut *store,
-                    FuncType::new(
-                        [ValueType::Option(OptionType::new(ValueType::U16)), ],
-                        [],
-                    ),
+                    FuncType::new([ValueType::Option(OptionType::new(ValueType::U16))], []),
                     |mut ctx, params, _results| {
                         let param_option = Option::<u16>::from_value(&params[0])?;
                         ctx.data_mut().param_option(param_option);
@@ -311,7 +313,10 @@ pub mod imports {
                 Func::new(
                     &mut *store,
                     FuncType::new(
-                        [ValueType::Result(ResultType::new(Some(ValueType::U8), Some(ValueType::U8))), ],
+                        [ValueType::Result(ResultType::new(
+                            Some(ValueType::U8),
+                            Some(ValueType::U8),
+                        ))],
                         [],
                     ),
                     |mut ctx, params, _results| {
@@ -329,7 +334,10 @@ pub mod imports {
                 Func::new(
                     &mut *store,
                     FuncType::new(
-                        [ValueType::Result(ResultType::new(Some(ValueType::U8), None)), ],
+                        [ValueType::Result(ResultType::new(
+                            Some(ValueType::U8),
+                            None,
+                        ))],
                         [],
                     ),
                     |mut ctx, params, _results| {
@@ -347,7 +355,10 @@ pub mod imports {
                 Func::new(
                     &mut *store,
                     FuncType::new(
-                        [ValueType::Result(ResultType::new(None, Some(ValueType::U8))), ],
+                        [ValueType::Result(ResultType::new(
+                            None,
+                            Some(ValueType::U8),
+                        ))],
                         [],
                     ),
                     |mut ctx, params, _results| {
@@ -364,10 +375,7 @@ pub mod imports {
                 "param-result-none",
                 Func::new(
                     &mut *store,
-                    FuncType::new(
-                        [ValueType::Result(ResultType::new(None, None)), ],
-                        [],
-                    ),
+                    FuncType::new([ValueType::Result(ResultType::new(None, None))], []),
                     |mut ctx, params, _results| {
                         let result_none = Result::<(), ()>::from_value(&params[0])?;
                         ctx.data_mut().param_result_none(result_none);
@@ -383,7 +391,15 @@ pub mod imports {
                 Func::new(
                     &mut *store,
                     FuncType::new(
-                        [ValueType::List(ListType::new(ValueType::String)), Event::ty(), ValueType::Option(OptionType::new(ValueType::String)), ValueType::Result(ResultType::new(Some(ValueType::String), Some(ValueType::String))), ],
+                        [
+                            ValueType::List(ListType::new(ValueType::String)),
+                            Event::ty(),
+                            ValueType::Option(OptionType::new(ValueType::String)),
+                            ValueType::Result(ResultType::new(
+                                Some(ValueType::String),
+                                Some(ValueType::String),
+                            )),
+                        ],
                         [],
                     ),
                     |mut ctx, params, _results| {
@@ -391,7 +407,12 @@ pub mod imports {
                         let param_record = Event::from_value(&params[1])?;
                         let param_option = Option::<String>::from_value(&params[2])?;
                         let result_all = Result::<String, String>::from_value(&params[3])?;
-                        ctx.data_mut().param_mult(param_list, param_record, param_option, result_all);
+                        ctx.data_mut().param_mult(
+                            param_list,
+                            param_record,
+                            param_option,
+                            result_all,
+                        );
                         Ok(())
                     },
                 ),
@@ -400,7 +421,6 @@ pub mod imports {
 
         Ok(())
     }
-
 }
 
 // ========== Guest Exports ==========
@@ -425,6 +445,4 @@ pub mod exports_run {
             .ok_or_else(|| anyhow!("Function 'start' not found"))?
             .typed::<(), ()>()
     }
-
 }
-

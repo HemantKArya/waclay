@@ -5,13 +5,9 @@
 
 use anyhow::*;
 use waclay::*;
-use wasm_runtime_layer::{backend};
-
+use wasm_runtime_layer::backend;
 
 // ========== Type Definitions ==========
-
-
-
 
 #[derive(Debug, Clone)]
 pub struct ComplexData {
@@ -31,10 +27,20 @@ impl ComponentType for ComplexData {
                     ("id", ValueType::U32),
                     ("name", ValueType::String),
                     ("values", ValueType::List(ListType::new(ValueType::F64))),
-                    ("metadata", ValueType::Option(OptionType::new(ValueType::String))),
-                    ("status", ValueType::Result(ResultType::new(Some(ValueType::String), Some(ValueType::String)))),
+                    (
+                        "metadata",
+                        ValueType::Option(OptionType::new(ValueType::String)),
+                    ),
+                    (
+                        "status",
+                        ValueType::Result(ResultType::new(
+                            Some(ValueType::String),
+                            Some(ValueType::String),
+                        )),
+                    ),
                 ],
-            ).unwrap(),
+            )
+            .unwrap(),
         )
     }
 
@@ -56,8 +62,16 @@ impl ComponentType for ComplexData {
                 .field("status")
                 .ok_or_else(|| anyhow!("Missing 'status' field"))?;
 
-            let id = if let Value::U32(x) = id { x } else { bail!("Expected u32") };
-            let name = if let Value::String(s) = name { s.to_string() } else { bail!("Expected string") };
+            let id = if let Value::U32(x) = id {
+                x
+            } else {
+                bail!("Expected u32")
+            };
+            let name = if let Value::String(s) = name {
+                s.to_string()
+            } else {
+                bail!("Expected string")
+            };
             let values = Vec::<f64>::from_value(&values)?;
             let metadata = Option::<String>::from_value(&metadata)?;
             let status = Result::<String, String>::from_value(&status)?;
@@ -82,10 +96,20 @@ impl ComponentType for ComplexData {
                     ("id", ValueType::U32),
                     ("name", ValueType::String),
                     ("values", ValueType::List(ListType::new(ValueType::F64))),
-                    ("metadata", ValueType::Option(OptionType::new(ValueType::String))),
-                    ("status", ValueType::Result(ResultType::new(Some(ValueType::String), Some(ValueType::String)))),
+                    (
+                        "metadata",
+                        ValueType::Option(OptionType::new(ValueType::String)),
+                    ),
+                    (
+                        "status",
+                        ValueType::Result(ResultType::new(
+                            Some(ValueType::String),
+                            Some(ValueType::String),
+                        )),
+                    ),
                 ],
-            ).unwrap(),
+            )
+            .unwrap(),
             [
                 ("id", Value::U32(self.id)),
                 ("name", Value::String(self.name.into())),
@@ -122,6 +146,4 @@ pub mod exports_exports {
             .ok_or_else(|| anyhow!("Function 'get-complex-data' not found"))?
             .typed::<(), ComplexData>()
     }
-
 }
-
