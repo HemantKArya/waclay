@@ -3,7 +3,7 @@ mod bindings;
 
 use anyhow::Result;
 use bindings::*;
-use wasm_component_layer::*;
+use waclay::*;
 
 // Host implementation for permission checking
 struct FsHost;
