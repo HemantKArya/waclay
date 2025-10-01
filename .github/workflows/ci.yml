@@ -61,10 +61,10 @@ jobs:
       run: cargo doc --workspace --no-deps
 
   # ============================================================
-  # wcomp_layer Crate Tests
+  # waclay Crate Tests
   # ============================================================
-  wcomp_layer:
-    name: Test wcomp_layer
+  waclay:
+    name: Test waclay
     runs-on: ubuntu-latest
 
     steps:
@@ -81,20 +81,20 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           target
-        key: ${{ runner.os }}-cargo-wcomp-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-waclay-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
-          ${{ runner.os }}-cargo-wcomp-
+          ${{ runner.os }}-cargo-waclay-
 
-    - name: Run wcomp_layer tests
-      working-directory: crates/wcomp_layer
+    - name: Run waclay tests
+      working-directory: crates/waclay
       run: cargo test
 
-    - name: Build wcomp_layer examples
-      working-directory: crates/wcomp_layer
+    - name: Build waclay examples
+      working-directory: crates/waclay
       run: cargo build --examples
 
     - name: Test core examples
-      working-directory: crates/wcomp_layer
+      working-directory: crates/waclay
       run: |
         echo "Testing single_component example..."
         cargo run --example single_component
@@ -305,8 +305,8 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cargo-android-${{ matrix.target }}-
 
-    - name: Build wcomp_layer for Android
-      working-directory: crates/wcomp_layer
+    - name: Build waclay for Android
+      working-directory: crates/waclay
       run: cargo ndk --target ${{ matrix.target }} --platform 21 build
 
   # ============================================================
@@ -341,8 +341,8 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cargo-wasm-
 
-    - name: Build WebAssembly components (wcomp_layer examples)
-      working-directory: crates/wcomp_layer/examples
+    - name: Build WebAssembly components (waclay examples)
+      working-directory: crates/waclay/examples
       run: |
         for dir in */; do
           if [ -f "${dir}build.sh" ]; then
@@ -400,8 +400,8 @@ jobs:
           -not -path '*/examples/*/src/lib.rs' \
           -not -path './target/*')
 
-    - name: Run clippy (wcomp_layer)
-      working-directory: crates/wcomp_layer
+    - name: Run clippy (waclay)
+      working-directory: crates/waclay
       run: cargo clippy --all-targets -- -D warnings
 
     - name: Run clippy (wit-bindgen-wcl)
