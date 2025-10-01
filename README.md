@@ -9,7 +9,7 @@
 [![Unsafe Forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-*A maintained and actively developed fork bringing the WebAssembly Component Model to life*
+*A maintained fork bringing the WebAssembly Component Model to life*
 
 [Features](#-features) •
 [Quick Start](#-quick-start) •
@@ -33,7 +33,7 @@ This is a **maintained fork** of the original `wasm_component_layer` project. Af
 - ✅ **Add new features** - Including the new `wit-bindgen-wcl` tool for generating host bindings
 - ✅ **Maintain usability** - Making it a practical tool for plugin development and WASM-based applications
 - ✅ **Stay runtime agnostic** - Preserving the brilliant design that works with Wasmi, Wasmtime, and other backends
-- ✅ **Build community** - Active development and welcoming contributions until Component Model standardization
+- ✅ **Build community** - Welcoming contributions to help maintain and improve the project
 
 ### 💡 The Brilliant Design
 
@@ -107,7 +107,7 @@ Runtime-agnostic WebAssembly Component Model implementation. Load and execute co
 
 Generate type-safe Rust host bindings from WIT files. Makes working with components much more ergonomic!
 
-- **Status:** Active Development - Basic features working
+- **Status:** Basic features working, contributions welcome
 - **Use Cases:** Simple to moderate complexity WIT files (check examples)
 - **Community:** Contributors needed to expand capabilities
 
@@ -287,7 +287,7 @@ use bindings::*;  // Type-safe functions generated from WIT
 
 ## 🤝 Contributing
 
-**We need your help!** This project is actively maintained, but we need community support to reach its full potential.
+**We need your help!** This project is maintained and welcoming community contributions.
 
 ### Why Contribute?
 
@@ -353,7 +353,7 @@ cd waclay
 - [ ] More runtime backend support
 - [ ] WASI Preview 2 integration examples
 
-**Note:** This project will be actively maintained until the Component Model is finalized by the WASI community and fully supported across all major runtimes.
+**Note:** This project aims to bridge the gap until the Component Model is finalized by the WASI community and fully supported across all major runtimes. Community contributions are essential to keep it up-to-date.
 
 ---
 
@@ -513,8 +513,7 @@ Without this foundation, this project wouldn't exist.
 
 **Maintained by [HemantKArya](https://github.com/HemantKArya)** since the original project was discontinued:
 
-- 🔧 50+ commits of updates and fixes
-- 🚀 Keeping it compiling with modern Rust
+- 🚀 Trying to keep it compiling with modern Rust
 - ✨ New `wit-bindgen-wcl` tool
 - 📚 Improved documentation
 - 🤝 Community building
