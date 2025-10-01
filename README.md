@@ -1,7 +1,7 @@
-# wasm_component_layer Workspace
+# waclay Workspace
 
-[![Crates.io](https://img.shields.io/crates/v/wasm_component_layer.svg)](https://crates.io/crates/wasm_component_layer)
-[![Docs.rs](https://docs.rs/wasm_component_layer/badge.svg)](https://docs.rs/wasm_component_layer)
+[![Crates.io](https://img.shields.io/crates/v/waclay.svg)](https://crates.io/crates/waclay)
+[![Docs.rs](https://docs.rs/waclay/badge.svg)](https://docs.rs/waclay)
 [![Unsafe Forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
 This workspace contains multiple crates for WebAssembly Component Model development:
@@ -9,10 +9,10 @@ This workspace contains multiple crates for WebAssembly Component Model developm
 ## Workspace Structure
 
 ```
-wcomp_layer/
+waclay/
 ├── Cargo.toml              # Workspace root
 ├── crates/
-│   ├── wcomp_layer/        # Main library crate
+│   ├── waclay/             # Main library crate
 │   │   ├── src/            # Core component layer implementation
 │   │   ├── examples/       # Library usage examples
 │   │   └── docs/           # Documentation
@@ -23,16 +23,16 @@ wcomp_layer/
 
 ## Crates
 
-### `wasm_component_layer`
+### `waclay`
 Runtime agnostic implementation of the [WebAssembly component model](https://github.com/WebAssembly/component-model).
 It supports loading and linking WASM components, inspecting and generating component interface types at runtime, and more atop any WebAssembly backend. The implementation is based upon the [`wasmtime`](https://github.com/bytecodealliance/wasmtime), [`js-component-bindgen`](https://github.com/bytecodealliance/jco), and [`wit-parser`](https://github.com/bytecodealliance/wasm-tools/tree/main) crates.
 
 - **Version:** 0.1.3
 - **License:** Apache-2.0
-- **Repository:** https://github.com/DouglasDwyer/wasm_component_layer
+- **Repository:** https://github.com/HemantKArya/waclay
 
 ### `wit-bindgen-wcl`
-A command-line tool for generating Rust bindings from WIT (WebAssembly Interface Type) files for use with `wasm_component_layer`.
+A command-line tool for generating Rust bindings from WIT (WebAssembly Interface Type) files for use with `waclay`.
 
 ## Quick Start
 
@@ -43,7 +43,7 @@ cargo build
 
 ### Building a specific crate
 ```bash
-cargo build -p wasm_component_layer
+cargo build -p waclay
 cargo build -p wit-bindgen-wcl
 ```
 
@@ -65,16 +65,16 @@ wit-bindgen-wcl <wit-dir> <output-file>
 
 ## Usage
 
-To use `wasm_component_layer`, a runtime is required. The [`wasm_runtime_layer`](https://github.com/DouglasDwyer/wasm_runtime_layer) crate provides the common interface used for WebAssembly runtimes, so when using this crate it must also be added to the `Cargo.toml` file with the appropriate runtime selected. For instance, the examples in this repository use the [`wasmi_runtime_layer`](https://crates.io/crates/wasmi_runtime_layer) runtime:
+To use `waclay`, a runtime is required. The [`wasm_runtime_layer`](https://github.com/DouglasDwyer/wasm_runtime_layer) crate provides the common interface used for WebAssembly runtimes, so when using this crate it must also be added to the `Cargo.toml` file with the appropriate runtime selected. For instance, the examples in this repository use the [`wasmi_runtime_layer`](https://crates.io/crates/wasmi_runtime_layer) runtime:
 
 ```toml
-wasm_component_layer = "0.1.16"
+waclay = "0.1.16"
 wasmi_runtime_layer = "0.31.0"
 # wasmtime_runtime_layer = "21.0.0"
 # js_wasm_runtime_layer = "0.4.0"
 ```
 
-The following is a small overview of `wasm_component_layer`'s API. The complete example may be found in the [examples folder](/examples). Consider a WASM component with the following WIT:
+The following is a small overview of `waclay`'s API. The complete example may be found in the [examples folder](/examples). Consider a WASM component with the following WIT:
 
 ```wit
 package test:guest
@@ -89,10 +89,10 @@ world guest {
 }
 ```
 
-The component can be loaded into `wasm_component_layer` and invoked as follows:
+The component can be loaded into `waclay` and invoked as follows:
 
 ```rust
-use wasm_component_layer::*;
+use waclay::*;
 
 // The bytes of the component.
 const WASM: &[u8] = include_bytes!("single_component/component.wasm");
@@ -126,7 +126,7 @@ pub fn main() {
 
 ## Supported capabilities
 
-`wasm_component_layer` supports the following major capabilities:
+`waclay` supports the following major capabilities:
 
 - Parsing and instantiating WASM component binaries
 - Runtime generation of component interface types
@@ -148,7 +148,7 @@ The following things have yet to be implemented:
 
 ## Examples
 
-### wasm_component_layer Examples
+### waclay Examples
 
 Basic component model examples demonstrating core features:
 
@@ -184,8 +184,8 @@ cargo run --example bindgen-complex-return     # Complex return types with gener
 ```
 
 **Note:** wit-bindgen-wcl examples are prefixed with `bindgen-` to distinguish them from 
-wasm_component_layer examples. The key difference is that wit-bindgen-wcl examples use 
-**generated bindings** (more ergonomic, type-safe), while wasm_component_layer examples 
+waclay examples. The key difference is that wit-bindgen-wcl examples use 
+**generated bindings** (more ergonomic, type-safe), while waclay examples 
 use the **raw API** (more flexible, runtime introspection).
 
 ### Building Example Components
@@ -213,7 +213,7 @@ The workspace includes comprehensive test scripts for cross-platform testing:
 .\test-all.ps1 -Fast
 
 # Test individual crates
-.\test-wcomp-layer.ps1      # Test wasm_component_layer only
+.\test-wcomp-layer.ps1      # Test waclay only
 .\test-wit-bindgen.ps1      # Test wit-bindgen-wcl only
 
 # Skip specific platforms

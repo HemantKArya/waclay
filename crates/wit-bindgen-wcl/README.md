@@ -142,7 +142,7 @@ wit-bindgen-wcl my-component.wit bindings.rs
 ```rust
 mod bindings;
 use bindings::*;
-use wasm_component_layer::*;
+use waclay::*;
 
 const WASM: &[u8] = include_bytes!("component.wasm");
 

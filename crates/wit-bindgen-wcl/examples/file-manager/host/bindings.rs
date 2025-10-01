@@ -4,7 +4,7 @@
 #![allow(dead_code, unused_imports, ambiguous_glob_reexports)]
 
 use anyhow::*;
-use wasm_component_layer::*;
+use waclay::*;
 use wasm_runtime_layer::{backend};
 
 // Note: If using flags types, add to your Cargo.toml:

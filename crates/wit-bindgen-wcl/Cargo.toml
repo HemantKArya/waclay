@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "WIT binding generator for wasm-component-layer"
+description = "WIT binding generator for waclay"
 
 [dependencies]
 wit-parser = "0.219"
@@ -12,7 +12,7 @@ anyhow = "1.0"
 heck = "0.5"
 
 [dev-dependencies]
-wasm_component_layer = { path = "../wcomp_layer" }
+waclay = { path = "../waclay" }
 wasm_runtime_layer = "0.6"
 wasmi_runtime_layer = "0.51"
 
@@ -21,7 +21,7 @@ name = "wit-bindgen-wcl"
 path = "src/main.rs"
 
 # Example host implementations - demonstrates generated bindings
-# Note: Prefixed with "bindgen-" to avoid conflicts with wasm_component_layer examples
+# Note: Prefixed with "bindgen-" to avoid conflicts with waclay examples
 
 [[example]]
 name = "bindgen-calculator"

@@ -4,7 +4,7 @@
 #![allow(dead_code, unused_imports, ambiguous_glob_reexports)]
 
 use anyhow::*;
-use wasm_component_layer::*;
+use waclay::*;
 use wasm_runtime_layer::{backend};
 use bitflags;
 

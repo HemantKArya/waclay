@@ -4,8 +4,9 @@
 #![allow(dead_code, unused_imports, ambiguous_glob_reexports)]
 
 use anyhow::*;
-use wasm_component_layer::*;
-use wasm_runtime_layer::backend;
+use waclay::*;
+use wasm_runtime_layer::{backend};
+
 
 // ========== Type Definitions ==========
 
@@ -32,13 +33,12 @@ pub mod imports {
                 "host-log",
                 Func::new(
                     &mut *store,
-                    FuncType::new([ValueType::String], []),
+                    FuncType::new(
+                        [ValueType::String, ],
+                        [],
+                    ),
                     |mut ctx, params, _results| {
-                        let message = if let Value::String(s) = &params[0] {
-                            s.to_string()
-                        } else {
-                            bail!("Expected string")
-                        };
+                        let message = if let Value::String(s) = &params[0] { s.to_string() } else { bail!("Expected string") };
                         ctx.data_mut().host_log(message);
                         Ok(())
                     },
@@ -48,6 +48,7 @@ pub mod imports {
 
         Ok(())
     }
+
 }
 
 // ========== Guest Exports ==========
@@ -72,4 +73,6 @@ pub mod exports_message {
             .ok_or_else(|| anyhow!("Function 'process-message' not found"))?
             .typed::<String, String>()
     }
+
 }
+

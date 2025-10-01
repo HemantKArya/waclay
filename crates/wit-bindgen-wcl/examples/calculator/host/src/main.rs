@@ -3,7 +3,7 @@ mod bindings;
 
 use anyhow::Result;
 use bindings::*;
-use wasm_component_layer::*;
+use waclay::*;
 
 // Logger host implementation
 struct MyLoggerHost;

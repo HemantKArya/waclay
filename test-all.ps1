@@ -1,5 +1,5 @@
-# Master test script for wcomp_layer workspace
-# Tests both wasm_component_layer and wit-bindgen-wcl crates
+# Master test script for waclay workspace
+# Tests both waclay and wit-bindgen-wcl crates
 
 param(
     [switch]$SkipAndroid,
@@ -11,7 +11,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "WCOMP_LAYER WORKSPACE TEST SUITE" -ForegroundColor Cyan
+Write-Host "WACLAY WORKSPACE TEST SUITE" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -25,18 +25,18 @@ if ($Fast) {
     Write-Host ""
 }
 
-# Test wasm_component_layer
-Write-Host "Testing wasm_component_layer crate..." -ForegroundColor Magenta
+# Test waclay
+Write-Host "Testing waclay crate..." -ForegroundColor Magenta
 Write-Host ""
 
 $wcompArgs = @()
 if ($SkipAndroid) { $wcompArgs += "-SkipAndroid" }
 if ($SkipLinux) { $wcompArgs += "-SkipLinux" }
 
-& .\test-wcomp-layer.ps1 @wcompArgs
+& .\test-waclay.ps1 @wcompArgs
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "wasm_component_layer tests failed!" -ForegroundColor Red
+    Write-Host "waclay tests failed!" -ForegroundColor Red
     exit 1
 }
 
@@ -87,7 +87,7 @@ Write-Host "ALL TESTS PASSED!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Test Summary:" -ForegroundColor Cyan
-Write-Host "  - wasm_component_layer: PASSED" -ForegroundColor Green
+Write-Host "  - waclay: PASSED" -ForegroundColor Green
 Write-Host "  - wit-bindgen-wcl: PASSED" -ForegroundColor Green
 Write-Host "  - Workspace: PASSED" -ForegroundColor Green
 Write-Host ""
@@ -99,6 +99,6 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Quick Test Commands:" -ForegroundColor Yellow
 Write-Host "  .\test-all.ps1              # Full test suite (all platforms)" -ForegroundColor White
 Write-Host "  .\test-all.ps1 -Fast        # Quick tests (skip Android/Linux)" -ForegroundColor White
-Write-Host "  .\test-wcomp-layer.ps1      # Test wasm_component_layer only" -ForegroundColor White
+Write-Host "  .\test-waclay.ps1           # Test waclay only" -ForegroundColor White
 Write-Host "  .\test-wit-bindgen.ps1      # Test wit-bindgen-wcl only" -ForegroundColor White
 Write-Host ""

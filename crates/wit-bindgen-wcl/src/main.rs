@@ -73,7 +73,7 @@ fn generate_bindings(resolve: &Resolve, world_id: WorldId) -> Result<String> {
     )?;
     writeln!(output)?;
     writeln!(output, "use anyhow::*;")?;
-    writeln!(output, "use wasm_component_layer::*;")?;
+    writeln!(output, "use waclay::*;")?;
     writeln!(output, "use wasm_runtime_layer::{{backend}};")?;
     writeln!(output)?;
 

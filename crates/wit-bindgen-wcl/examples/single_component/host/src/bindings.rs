@@ -4,10 +4,12 @@
 #![allow(dead_code, unused_imports, ambiguous_glob_reexports)]
 
 use anyhow::*;
-use wasm_component_layer::*;
-use wasm_runtime_layer::backend;
+use waclay::*;
+use wasm_runtime_layer::{backend};
+
 
 // ========== Type Definitions ==========
+
 
 // ========== Guest Exports ==========
 
@@ -31,4 +33,6 @@ pub mod exports_foo {
             .ok_or_else(|| anyhow!("Function 'select-nth' not found"))?
             .typed::<(Vec<String>, u32), String>()
     }
+
 }
+

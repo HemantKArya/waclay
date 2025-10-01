@@ -8,7 +8,7 @@ name = "single_component_host"
 path = "src/main.rs"
 
 [dependencies]
-wasm_component_layer = { path = "../../../../wcomp_layer" }
+waclay = { path = "../../../../waclay" }
 wasm_runtime_layer = "0.6"
 wasmi_runtime_layer = "0.51"
 anyhow = "1.0"

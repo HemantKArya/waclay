@@ -1,10 +1,10 @@
 [workspace]
 members = [
-    "crates/wcomp_layer",
+    "crates/waclay",
     "crates/wit-bindgen-wcl",
 ]
 exclude = [
-    "crates/wcomp_layer/examples/*",
+    "crates/waclay/examples/*",
     "crates/wit-bindgen-wcl/examples/*/host",
     "crates/wit-bindgen-wcl/examples/*/component",
 ]
@@ -14,7 +14,7 @@ resolver = "2"
 version = "0.1.3"
 edition = "2021"
 license = "Apache-2.0"
-repository = "https://github.com/DouglasDwyer/wasm_component_layer"
+repository = "https://github.com/HemantKArya/waclay"
 
 [profile.dev]
 opt-level = 0

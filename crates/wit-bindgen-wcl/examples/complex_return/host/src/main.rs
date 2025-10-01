@@ -2,7 +2,7 @@ mod bindings;
 
 use anyhow::Result;
 use bindings::*;
-use wasm_component_layer::*;
+use waclay::*;
 
 fn main() -> Result<()> {
     println!("📦 Complex Return Example");
