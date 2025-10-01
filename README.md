@@ -19,6 +19,8 @@
 
 </div>
 
+> **⚠️ Experimental Warning:** This project is still experimental. Some features may work perfectly, others may not. It needs developer contributions to become stable.
+
 ---
 
 ## 📖 About This Project
