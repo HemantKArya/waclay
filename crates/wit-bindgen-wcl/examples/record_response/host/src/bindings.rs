@@ -5,8 +5,7 @@
 
 use anyhow::*;
 use wasm_component_layer::*;
-use wasm_runtime_layer::{backend};
-
+use wasm_runtime_layer::backend;
 
 // ========== Type Definitions ==========
 
@@ -19,13 +18,7 @@ pub struct Response {
 impl ComponentType for Response {
     fn ty() -> ValueType {
         ValueType::Record(
-            RecordType::new(
-                None,
-                [
-                    ("id", ValueType::U32),
-                    ("reply", ValueType::String),
-                ],
-            ).unwrap(),
+            RecordType::new(None, [("id", ValueType::U32), ("reply", ValueType::String)]).unwrap(),
         )
     }
 
@@ -38,13 +31,18 @@ impl ComponentType for Response {
                 .field("reply")
                 .ok_or_else(|| anyhow!("Missing 'reply' field"))?;
 
-            let id = if let Value::U32(x) = id { x } else { bail!("Expected u32") };
-            let reply = if let Value::String(s) = reply { s.to_string() } else { bail!("Expected string") };
+            let id = if let Value::U32(x) = id {
+                x
+            } else {
+                bail!("Expected u32")
+            };
+            let reply = if let Value::String(s) = reply {
+                s.to_string()
+            } else {
+                bail!("Expected string")
+            };
 
-            Ok(Response {
-                id,
-                reply,
-            })
+            Ok(Response { id, reply })
         } else {
             bail!("Expected Record value")
         }
@@ -52,13 +50,7 @@ impl ComponentType for Response {
 
     fn into_value(self) -> Result<Value> {
         let record = Record::new(
-            RecordType::new(
-                None,
-                [
-                    ("id", ValueType::U32),
-                    ("reply", ValueType::String),
-                ],
-            ).unwrap(),
+            RecordType::new(None, [("id", ValueType::U32), ("reply", ValueType::String)]).unwrap(),
             [
                 ("id", Value::U32(self.id)),
                 ("reply", Value::String(self.reply.into())),
@@ -91,6 +83,4 @@ pub mod exports_message {
             .ok_or_else(|| anyhow!("Function 'process-message' not found"))?
             .typed::<String, Response>()
     }
-
 }
-

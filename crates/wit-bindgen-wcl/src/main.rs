@@ -1,12 +1,10 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use heck::ToUpperCamelCase;
 use std::collections::BTreeMap;
 use std::fmt::Write as FmtWrite;
 use std::fs;
 use std::path::Path;
-use wit_parser::{
-    Resolve, WorldId, WorldItem, Type, TypeDefKind, Function, Results,
-};
+use wit_parser::{Function, Resolve, Results, Type, TypeDefKind, WorldId, WorldItem};
 
 mod codegen;
 use codegen::*;
@@ -23,7 +21,7 @@ fn main() -> Result<()> {
     let output_path = &args[2];
 
     println!("Parsing WIT from: {}", wit_path);
-    
+
     let mut resolve = Resolve::default();
     let (package_id, _source_map) = resolve
         .push_path(Path::new(wit_path))
@@ -40,8 +38,7 @@ fn main() -> Result<()> {
     let bindings = generate_bindings(&resolve, world_id)?;
 
     // Write to file
-    fs::write(output_path, bindings)
-        .context("Failed to write bindings file")?;
+    fs::write(output_path, bindings).context("Failed to write bindings file")?;
 
     println!("Generated bindings: {}", output_path);
     Ok(())
@@ -49,44 +46,60 @@ fn main() -> Result<()> {
 
 fn find_default_world(resolve: &Resolve, package_id: wit_parser::PackageId) -> Result<WorldId> {
     let package = &resolve.packages[package_id];
-    
+
     // Find the first world in the package
     for (_name, world_id) in &package.worlds {
         return Ok(*world_id);
     }
-    
+
     bail!("No worlds found in package")
 }
 
 fn generate_bindings(resolve: &Resolve, world_id: WorldId) -> Result<String> {
     let mut output = String::new();
-    
+
     // Header
-    writeln!(output, "// AUTO-GENERATED WIT BINDINGS for wasm-component-layer")?;
-    writeln!(output, "// DO NOT EDIT - Regenerate using wit-bindgen-wcl\n")?;
-    writeln!(output, "#![allow(dead_code, unused_imports, ambiguous_glob_reexports)]")?;
+    writeln!(
+        output,
+        "// AUTO-GENERATED WIT BINDINGS for wasm-component-layer"
+    )?;
+    writeln!(
+        output,
+        "// DO NOT EDIT - Regenerate using wit-bindgen-wcl\n"
+    )?;
+    writeln!(
+        output,
+        "#![allow(dead_code, unused_imports, ambiguous_glob_reexports)]"
+    )?;
     writeln!(output)?;
     writeln!(output, "use anyhow::*;")?;
     writeln!(output, "use wasm_component_layer::*;")?;
     writeln!(output, "use wasm_runtime_layer::{{backend}};")?;
     writeln!(output)?;
-    
+
     // Check if we need bitflags
     let world = &resolve.worlds[world_id];
-    let needs_bitflags = world.imports.iter().chain(world.exports.iter())
+    let needs_bitflags = world
+        .imports
+        .iter()
+        .chain(world.exports.iter())
         .any(|(_, item)| {
             if let WorldItem::Interface { id, .. } = item {
                 let iface = &resolve.interfaces[*id];
-                iface.types.values().any(|type_id| {
-                    matches!(&resolve.types[*type_id].kind, TypeDefKind::Flags(_))
-                })
+                iface
+                    .types
+                    .values()
+                    .any(|type_id| matches!(&resolve.types[*type_id].kind, TypeDefKind::Flags(_)))
             } else {
                 false
             }
         });
-    
+
     if needs_bitflags {
-        writeln!(output, "// Note: If using flags types, add to your Cargo.toml:")?;
+        writeln!(
+            output,
+            "// Note: If using flags types, add to your Cargo.toml:"
+        )?;
         writeln!(output, "// bitflags = \"2.0\"")?;
         writeln!(output)?;
     }
@@ -125,12 +138,12 @@ impl<'a> BindingsGenerator<'a> {
 
     fn collect_types(&mut self) {
         let world = &self.resolve.worlds[self.world_id];
-        
+
         // Collect types from imports
         for (_name, item) in &world.imports {
             self.collect_types_from_item(item);
         }
-        
+
         // Collect types from exports
         for (_name, item) in &world.exports {
             self.collect_types_from_item(item);
@@ -187,10 +200,12 @@ impl<'a> BindingsGenerator<'a> {
         }
 
         let typedef = &self.resolve.types[type_id];
-        let name = typedef.name.as_ref()
+        let name = typedef
+            .name
+            .as_ref()
             .map(|n| n.to_upper_camel_case())
             .unwrap_or_else(|| format!("Type{:?}", type_id));
-        
+
         self.types_to_generate.insert(type_id, name);
 
         // Recursively collect nested types
@@ -247,7 +262,7 @@ impl<'a> BindingsGenerator<'a> {
     fn generate_imports(&self, output: &mut String) -> Result<()> {
         let world = &self.resolve.worlds[self.world_id];
         let imports: Vec<_> = world.imports.iter().collect();
-        
+
         if imports.is_empty() {
             return Ok(());
         }
@@ -282,7 +297,13 @@ impl<'a> BindingsGenerator<'a> {
                 WorldItem::Interface { id: iface_id, .. } => {
                     let iface = &self.resolve.interfaces[*iface_id];
                     let name_str = self.resolve.name_world_key(name);
-                    generate_import_registration_function(self.resolve, &name_str, iface, *iface_id, output)?;
+                    generate_import_registration_function(
+                        self.resolve,
+                        &name_str,
+                        iface,
+                        *iface_id,
+                        output,
+                    )?;
                 }
                 _ => {}
             }
@@ -297,7 +318,7 @@ impl<'a> BindingsGenerator<'a> {
     fn generate_exports(&self, output: &mut String) -> Result<()> {
         let world = &self.resolve.worlds[self.world_id];
         let exports: Vec<_> = world.exports.iter().collect();
-        
+
         if exports.is_empty() {
             return Ok(());
         }

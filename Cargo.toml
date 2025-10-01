@@ -4,6 +4,7 @@ members = [
     "crates/wit-bindgen-wcl",
 ]
 exclude = [
+    "crates/wcomp_layer/examples/*",
     "crates/wit-bindgen-wcl/examples/*/host",
     "crates/wit-bindgen-wcl/examples/*/component",
 ]

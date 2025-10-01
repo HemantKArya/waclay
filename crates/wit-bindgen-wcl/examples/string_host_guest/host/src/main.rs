@@ -20,11 +20,11 @@ fn main() -> Result<()> {
     let mut store = Store::new(&engine, MyHostLogger);
     let component_bytes = std::fs::read("examples/string_host_guest/component/component.wasm")?;
     let component = Component::new(&engine, &component_bytes)?;
-    
+
     let mut linker = Linker::default();
     // Register host functions
     imports::register_host_logger_host(&mut linker, &mut store)?;
-    
+
     let instance = linker.instantiate(&mut store, &component)?;
     println!("✅ Component loaded\n");
 

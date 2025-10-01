@@ -60,17 +60,17 @@ fn main() -> Result<()> {
     let mut store = Store::new(&engine, HostImpl);
     let component_bytes = std::fs::read("examples/option_result/component/component.wasm")?;
     let component = Component::new(&engine, &component_bytes)?;
-    
+
     let mut linker = Linker::default();
-        // Register host functions
+    // Register host functions
     imports::register_host_host(&mut linker, &mut store)?;
-    
+
     let instance = linker.instantiate(&mut store, &component)?;
     println!("✅ Component loaded\n");
 
     let start_func = exports_run::get_start(&instance, &mut store)?;
     start_func.call(&mut store, ())?;
-    
+
     println!("\n✅ All tests completed!\n");
     println!("💡 Key Features:");
     println!("   • Option<T> return types from host functions");
@@ -78,6 +78,6 @@ fn main() -> Result<()> {
     println!("   • Result<T> with only ok type");
     println!("   • Result<_, E> with only error type");
     println!("   • Result with neither type (unit result)");
-    
+
     Ok(())
 }

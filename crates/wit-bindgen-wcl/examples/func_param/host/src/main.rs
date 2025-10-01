@@ -40,7 +40,7 @@ impl HostHost for HostImpl {
         param_list: Vec<String>,
         param_record: Event,
         param_option: Option<String>,
-        result_all: Result<String, String>
+        result_all: Result<String, String>,
     ) {
         println!("  param-mult:");
         println!("    list: {:?}", param_list);
@@ -58,18 +58,18 @@ fn main() -> Result<()> {
     let mut store = Store::new(&engine, HostImpl);
     let component_bytes = std::fs::read("examples/func_param/component/component.wasm")?;
     let component = Component::new(&engine, &component_bytes)?;
-    
+
     let mut linker = Linker::default();
     // Register host functions
     imports::register_host_host(&mut linker, &mut store)?;
-    
+
     let instance = linker.instantiate(&mut store, &component)?;
     println!("✅ Component loaded\n");
     println!("📝 Testing Complex Function Parameters:\n");
 
     let start_func = exports_run::get_start(&instance, &mut store)?;
     start_func.call(&mut store, ())?;
-    
+
     println!("\n✅ All tests completed!\n");
     println!("💡 Key Features:");
     println!("   • List parameters");
@@ -77,6 +77,6 @@ fn main() -> Result<()> {
     println!("   • Option parameters");
     println!("   • Result parameters (all variants)");
     println!("   • Multiple complex parameters in single function");
-    
+
     Ok(())
 }

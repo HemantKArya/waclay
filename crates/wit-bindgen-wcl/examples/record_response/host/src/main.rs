@@ -12,7 +12,7 @@ fn main() -> Result<()> {
     let mut store = Store::new(&engine, ());
     let component_bytes = std::fs::read("examples/record_response/component/component.wasm")?;
     let component = Component::new(&engine, &component_bytes)?;
-    
+
     let linker = Linker::default();
     let instance = linker.instantiate(&mut store, &component)?;
     println!("✅ Component loaded\n");

@@ -12,7 +12,7 @@ fn main() -> Result<()> {
     let mut store = Store::new(&engine, ());
     let component_bytes = std::fs::read("examples/variant_return/component/component.wasm")?;
     let component = Component::new(&engine, &component_bytes)?;
-    
+
     let linker = Linker::default();
     let instance = linker.instantiate(&mut store, &component)?;
     println!("✅ Component loaded\n");
@@ -25,7 +25,7 @@ fn main() -> Result<()> {
     for i in 1..=5 {
         println!("Call {}: ", i);
         let status = get_status.call(&mut store, ())?;
-        
+
         match status {
             Status::Pending => {
                 println!("  Status: Pending ⏳\n");

@@ -78,7 +78,8 @@ impl HttpHost for WebScraperHost {
         </footer>
     </div>
 </body>
-</html>"#.to_string();
+</html>"#
+            .to_string();
 
         Ok(HttpResponse {
             status: HttpStatus {
@@ -125,14 +126,21 @@ impl HttpHost for WebScraperHost {
 impl DomHost for WebScraperHost {
     fn parse_html(&mut self, html: String) -> Result<Vec<DomElement>, String> {
         println!("📄 [Host] Parsing HTML ({} bytes)", html.len());
-        
+
         // Return empty for now to test
         Ok(vec![])
     }
 
-    fn query_selector(&mut self, root: DomElement, selector: Selector) -> Result<Vec<DomElement>, String> {
-        println!("🔍 [Host] Query Selector on <{}> with selector: {:?}", root.tag_name, selector);
-        
+    fn query_selector(
+        &mut self,
+        root: DomElement,
+        selector: Selector,
+    ) -> Result<Vec<DomElement>, String> {
+        println!(
+            "🔍 [Host] Query Selector on <{}> with selector: {:?}",
+            root.tag_name, selector
+        );
+
         // Simulate query selection
         Ok(vec![root])
     }
@@ -149,7 +157,7 @@ fn main() -> Result<()> {
 
     let engine = Engine::new(wasmi_runtime_layer::Engine::default());
     let mut store = Store::new(&engine, WebScraperHost);
-    
+
     println!("📦 Loading WebAssembly component...");
     let component_bytes = std::fs::read("examples/web_scraper/component/component.wasm")?;
     let component = Component::new(&engine, &component_bytes)?;
@@ -224,9 +232,18 @@ fn main() -> Result<()> {
             }
 
             println!("   ⏱️  Metadata:");
-            println!("      Duration: {} ms", scraping_result.metadata.duration_ms);
-            println!("      Pages Visited: {}", scraping_result.metadata.pages_visited);
-            println!("      Elements Extracted: {}", scraping_result.metadata.elements_extracted);
+            println!(
+                "      Duration: {} ms",
+                scraping_result.metadata.duration_ms
+            );
+            println!(
+                "      Pages Visited: {}",
+                scraping_result.metadata.pages_visited
+            );
+            println!(
+                "      Elements Extracted: {}",
+                scraping_result.metadata.elements_extracted
+            );
             println!("      Cache Hits: {}", scraping_result.metadata.cache_hits);
             println!("      Retries: {}", scraping_result.metadata.retry_count);
         }
