@@ -384,7 +384,8 @@ jobs:
     - name: Check code formatting
       run: |
         # Format check excluding generated bindings files
-        cargo fmt --all -- --check $(find . -name '*.rs' -not -path '*/examples/*/host/src/bindings.rs' -not -path './target/*')
+        # Exclude: crates/wit-bindgen-wcl/examples/*/host/bindings.rs
+        cargo fmt --all -- --check $(find . -name '*.rs' -not -path '*/host/bindings.rs' -not -path './target/*')
 
     - name: Run clippy (wcomp_layer)
       working-directory: crates/wcomp_layer
