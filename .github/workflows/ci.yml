@@ -383,9 +383,18 @@ jobs:
 
     - name: Check code formatting
       run: |
-        # Format check excluding generated bindings files
-        # Exclude: crates/wit-bindgen-wcl/examples/*/host/bindings.rs
-        cargo fmt --all -- --check $(find . -name '*.rs' -not -path '*/host/bindings.rs' -not -path './target/*')
+        # Format check excluding generated bindings and example files
+        # Exclude: 
+        #   - crates/wit-bindgen-wcl/examples/*/host/bindings.rs (generated)
+        #   - crates/wit-bindgen-wcl/examples/*/host/src/main.rs (example host)
+        #   - crates/wit-bindgen-wcl/examples/*/component/src/lib.rs (example component)
+        #   - crates/wcomp_layer/examples/*/src/lib.rs (example component)
+        cargo fmt --all -- --check $(find . -name '*.rs' \
+          -not -path '*/host/bindings.rs' \
+          -not -path '*/host/src/main.rs' \
+          -not -path '*/component/src/lib.rs' \
+          -not -path '*/examples/*/src/lib.rs' \
+          -not -path './target/*')
 
     - name: Run clippy (wcomp_layer)
       working-directory: crates/wcomp_layer
