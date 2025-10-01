@@ -1,0 +1,18 @@
+package test:guest;
+
+interface exports {
+    // Define a variant type with multiple cases
+    variant status {
+        pending,
+        running(string),
+        completed(result<string, string>),
+        failed(string),
+    }
+
+    // Export function that returns a variant
+    get-status: func() -> status;
+}
+
+world guest {
+    export exports;
+}

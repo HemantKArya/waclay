@@ -1,0 +1,31 @@
+[package]
+name = "wasm_component_layer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+readme = "README.md"
+description = """
+WebAssembly component model implementation for any backend.
+"""
+
+[dependencies]
+anyhow = { version = "1.0.100", default-features = false }
+bytemuck = { version = "1.23.2", default-features = false, features = [ "extern_crate_alloc" ] }
+fxhash = "0.2.1"
+id-arena = { version = "2.2.1", default-features = false }
+ref-cast = { version = "1.0.24", default-features = false }
+semver = { version = "1.0.27", default-features = false }
+serde = { version = "1.0.227", optional = true, default-features = false, features = [ "derive", "rc" ] }
+slab = { version = "0.4.11", default-features = false }
+wasm_runtime_layer = { version = "0.6.0", default-features = false }
+wasmtime-environ = { version = "37.0.1", features = [ "component-model", "compile" ] }
+wit-component = { version = "0.239.0", default-features = false }
+wit-parser = { version = "0.239.0", default-features = false }
+
+[features]
+serde = [ "dep:serde", "semver/serde" ]
+
+[dev-dependencies]
+wasmi = "0.51.1"
+wasmi_runtime_layer = "0.51"

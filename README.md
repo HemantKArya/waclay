@@ -1,11 +1,67 @@
-# wasm_component_layer
+# wasm_component_layer Workspace
 
 [![Crates.io](https://img.shields.io/crates/v/wasm_component_layer.svg)](https://crates.io/crates/wasm_component_layer)
 [![Docs.rs](https://docs.rs/wasm_component_layer/badge.svg)](https://docs.rs/wasm_component_layer)
 [![Unsafe Forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
-`wasm_component_layer` is a runtime agnostic implementation of the [WebAssembly component model](https://github.com/WebAssembly/component-model).
+This workspace contains multiple crates for WebAssembly Component Model development:
+
+## Workspace Structure
+
+```
+wcomp_layer/
+├── Cargo.toml              # Workspace root
+├── crates/
+│   ├── wcomp_layer/        # Main library crate
+│   │   ├── src/            # Core component layer implementation
+│   │   ├── examples/       # Library usage examples
+│   │   └── docs/           # Documentation
+│   └── wit-bindgen-wcl/    # WIT binding generator binary
+│       └── src/            # Code generator implementation
+└── README.md               # This file
+```
+
+## Crates
+
+### `wasm_component_layer`
+Runtime agnostic implementation of the [WebAssembly component model](https://github.com/WebAssembly/component-model).
 It supports loading and linking WASM components, inspecting and generating component interface types at runtime, and more atop any WebAssembly backend. The implementation is based upon the [`wasmtime`](https://github.com/bytecodealliance/wasmtime), [`js-component-bindgen`](https://github.com/bytecodealliance/jco), and [`wit-parser`](https://github.com/bytecodealliance/wasm-tools/tree/main) crates.
+
+- **Version:** 0.1.3
+- **License:** Apache-2.0
+- **Repository:** https://github.com/DouglasDwyer/wasm_component_layer
+
+### `wit-bindgen-wcl`
+A command-line tool for generating Rust bindings from WIT (WebAssembly Interface Type) files for use with `wasm_component_layer`.
+
+## Quick Start
+
+### Building the workspace
+```bash
+cargo build
+```
+
+### Building a specific crate
+```bash
+cargo build -p wasm_component_layer
+cargo build -p wit-bindgen-wcl
+```
+
+### Running the binding generator
+```bash
+cargo run --bin wit-bindgen-wcl -- <wit-file-or-dir> <output-file>
+```
+
+Example:
+```bash
+cargo run --bin wit-bindgen-wcl -- ./my-component/wit ./bindings.rs
+```
+
+### Installing the binding generator
+```bash
+cargo install --path crates/wit-bindgen-wcl
+wit-bindgen-wcl <wit-dir> <output-file>
+```
 
 ## Usage
 
@@ -91,18 +147,83 @@ The following things have yet to be implemented:
 **serde** - Allows for the serialization of identifiers, types, and values. Note that serializing resources is not allowed, because resources may be tied to specific instances.
 
 ## Examples
-```shell
-# EXAMPLE_NAME: [single_component|resource|multilevel_resource|...]
 
-# build example wasm file
-cd examples/EXAMPLE_NAME # cd examples/single_component
+### wasm_component_layer Examples
+
+Basic component model examples demonstrating core features:
+
+```shell
+# Run from workspace root
+cargo run --example single_component     # Simple component instantiation
+cargo run --example string_host_guest    # String passing between host/guest
+cargo run --example func_param           # Function parameters
+cargo run --example record_response      # Record types
+cargo run --example option_result        # Option and Result types
+cargo run --example variant_return       # Variant types
+cargo run --example complex_return       # Complex return types
+cargo run --example resource             # Resource handling
+cargo run --example guest_resource       # Guest-defined resources
+cargo run --example multilevel_resource  # Multi-level resources
+```
+
+### wit-bindgen-wcl Examples
+
+Advanced examples using generated bindings (9 examples, prefixed with `bindgen-`):
+
+```shell
+# Run from workspace root
+cargo run --example bindgen-calculator         # Calculator with logging & error handling
+cargo run --example bindgen-web-scraper        # Web scraping component
+cargo run --example bindgen-single-component   # Basic binding generation
+cargo run --example bindgen-string-host-guest  # String passing with generated bindings
+cargo run --example bindgen-func-param         # Function parameters with generated bindings
+cargo run --example bindgen-record-response    # Record types with generated bindings
+cargo run --example bindgen-option-result      # Option and Result with generated bindings
+cargo run --example bindgen-variant-return     # Variant types with generated bindings
+cargo run --example bindgen-complex-return     # Complex return types with generated bindings
+```
+
+**Note:** wit-bindgen-wcl examples are prefixed with `bindgen-` to distinguish them from 
+wasm_component_layer examples. The key difference is that wit-bindgen-wcl examples use 
+**generated bindings** (more ergonomic, type-safe), while wasm_component_layer examples 
+use the **raw API** (more flexible, runtime introspection).
+
+### Building Example Components
+
+To rebuild the WASM components for examples:
+
+```shell
+# Example: rebuilding calculator component
+cd crates/wit-bindgen-wcl/examples/calculator/component
 rustup toolchain install nightly
 rustup override set nightly
-cargo build
-wasm-tools component new target/wasm32-unknown-unknown/debug/component_example.wasm -o component.wasm
-wasm-tools print component.wasm -o component.wat
-
-# run example in host implementation
-cd ../../
-cargo run --example EXAMPLE_NAME # cargo run --example single_component
+cargo build --target wasm32-unknown-unknown
+wasm-tools component new target/wasm32-unknown-unknown/debug/calculator.wasm -o component.wasm
 ```
+
+## Testing
+
+The workspace includes comprehensive test scripts for cross-platform testing:
+
+```shell
+# Test both crates (full suite including Android/Linux builds)
+.\test-all.ps1
+
+# Quick tests (skip Android/Linux builds)
+.\test-all.ps1 -Fast
+
+# Test individual crates
+.\test-wcomp-layer.ps1      # Test wasm_component_layer only
+.\test-wit-bindgen.ps1      # Test wit-bindgen-wcl only
+
+# Skip specific platforms
+.\test-wcomp-layer.ps1 -SkipAndroid -SkipLinux
+.\test-wit-bindgen.ps1 -SkipExamples
+```
+
+The test scripts validate:
+- Unit tests and compilation
+- Example builds and execution
+- Cross-platform compatibility (Windows, Android, Linux)
+- Binary functionality
+- Workspace-level integration

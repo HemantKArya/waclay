@@ -1,0 +1,366 @@
+package example:webscraper;
+
+/// Networking and Web Scraping Interface
+/// Demonstrates heavily nested types for real-world use cases
+
+interface http {
+    /// HTTP Methods
+    enum http-method {
+        get,
+        post,
+        put,
+        delete,
+        patch,
+        head,
+        options,
+    }
+
+    /// HTTP Headers as key-value pairs
+    record http-header {
+        name: string,
+        value: string,
+    }
+
+    /// Cookie with all standard attributes
+    record cookie {
+        name: string,
+        value: string,
+        domain: option<string>,
+        path: option<string>,
+        expires: option<u64>,
+        max-age: option<u32>,
+        secure: bool,
+        http-only: bool,
+        same-site: option<same-site-policy>,
+    }
+
+    enum same-site-policy {
+        strict,
+        lax,
+        none,
+    }
+
+    /// Request body variants
+    variant request-body {
+        text(string),
+        json(string),
+        form(list<tuple<string, string>>),
+        binary(list<u8>),
+        empty,
+    }
+
+    /// Complete HTTP Request
+    record http-request {
+        method: http-method,
+        url: string,
+        headers: list<http-header>,
+        cookies: list<cookie>,
+        body: option<request-body>,
+        timeout-ms: option<u32>,
+        follow-redirects: bool,
+        max-redirects: option<u32>,
+    }
+
+    /// HTTP Status information
+    record http-status {
+        code: u32,
+        text: string,
+    }
+
+    /// Response body with content type
+    record response-content {
+        content-type: string,
+        data: response-data,
+        encoding: option<string>,
+    }
+
+    variant response-data {
+        text(string),
+        binary(list<u8>),
+    }
+
+    /// Complete HTTP Response
+    record http-response {
+        status: http-status,
+        headers: list<http-header>,
+        cookies: list<cookie>,
+        content: option<response-content>,
+        redirect-chain: list<string>,
+        timing: response-timing,
+    }
+
+    /// Response timing information
+    record response-timing {
+        dns-lookup-ms: u32,
+        tcp-connect-ms: u32,
+        tls-handshake-ms: option<u32>,
+        time-to-first-byte-ms: u32,
+        total-time-ms: u32,
+    }
+
+    /// Make HTTP request from host
+    make-request: func(request: http-request) -> result<http-response, string>;
+    
+    /// Log from guest to host
+    log-info: func(message: string);
+    log-error: func(message: string);
+}
+
+interface dom {
+    /// CSS Selector types
+    variant selector {
+        id(string),
+        class(string),
+        tag(string),
+        attribute(tuple<string, option<string>>),
+        complex(string),
+    }
+
+    /// DOM Element attributes
+    record element-attribute {
+        name: string,
+        value: string,
+    }
+
+    /// CSS Styles
+    record element-style {
+        property: string,
+        value: string,
+        important: bool,
+    }
+
+    /// DOM Element structure
+    record dom-element {
+        tag-name: string,
+        id: option<string>,
+        classes: list<string>,
+        attributes: list<element-attribute>,
+        styles: list<element-style>,
+        text-content: option<string>,
+        inner-html: option<string>,
+        parent-path: list<string>,
+        has-children: bool,
+        child-count: u32,
+    }
+
+    /// Parse HTML to DOM (host function)
+    parse-html: func(html: string) -> result<list<dom-element>, string>;
+    
+    /// Query DOM elements (host function)
+    query-selector: func(root: dom-element, selector: selector) -> result<list<dom-element>, string>;
+}
+
+interface scraper {
+    use dom.{selector};
+    
+    /// Scraping target configuration
+    record scrape-target {
+        url: string,
+        selectors: list<selector>,
+        required-fields: list<string>,
+        follow-links: bool,
+        max-depth: u32,
+        delay-ms: option<u32>,
+    }
+
+    /// Extracted data from an element
+    record extracted-data {
+        field-name: string,
+        value: extracted-value,
+        source-url: string,
+        xpath: option<string>,
+        confidence: f32,
+    }
+
+    /// Types of extracted values
+    variant extracted-value {
+        text(string),
+        number(f64),
+        boolean(bool),
+        url(string),
+        image(image-data),
+        structured(list<tuple<string, string>>),
+    }
+
+    /// Image information
+    record image-data {
+        url: string,
+        alt-text: option<string>,
+        width: option<u32>,
+        height: option<u32>,
+        format: option<string>,
+    }
+
+    /// Scraping result with metadata
+    record scraping-result {
+        target: scrape-target,
+        data: list<extracted-data>,
+        errors: list<scrape-error>,
+        metadata: scrape-metadata,
+        has-related-results: bool,
+    }
+
+    /// Error information
+    record scrape-error {
+        error-type: error-type,
+        message: string,
+        url: option<string>,
+        timestamp: u64,
+        recoverable: bool,
+    }
+
+    enum error-type {
+        network,
+        parsing,
+        selector,
+        timeout,
+        rate-limit,
+        authentication,
+        unknown,
+    }
+
+    /// Scraping metadata
+    record scrape-metadata {
+        start-time: u64,
+        end-time: u64,
+        duration-ms: u32,
+        pages-visited: u32,
+        elements-extracted: u32,
+        cache-hits: u32,
+        retry-count: u32,
+    }
+
+    /// Statistics summary
+    record scrape-statistics {
+        total-requests: u32,
+        successful-requests: u32,
+        failed-requests: u32,
+        total-data-extracted: u32,
+        average-response-time-ms: f32,
+        cache-hit-rate: f32,
+        error-breakdown: list<tuple<error-type, u32>>,
+    }
+}
+
+interface pipeline {
+    /// Data transformation operations
+    variant transform-operation {
+        extract-text,
+        extract-numbers,
+        extract-urls,
+        extract-emails,
+        trim,
+        lowercase,
+        uppercase,
+        regex(string),
+        custom(string),
+    }
+
+    /// Pipeline stage
+    record pipeline-stage {
+        name: string,
+        transforms: list<transform-operation>,
+        filters: list<filter-rule>,
+        validators: list<validation-rule>,
+    }
+
+    /// Filter rules
+    record filter-rule {
+        field: string,
+        condition: filter-condition,
+    }
+
+    variant filter-condition {
+        equals(string),
+        contains(string),
+        starts-with(string),
+        ends-with(string),
+        matches-regex(string),
+        greater-than(f64),
+        less-than(f64),
+        is-empty,
+        is-not-empty,
+    }
+
+    /// Validation rules
+    record validation-rule {
+        field: string,
+        rule-type: validation-type,
+        error-message: string,
+    }
+
+    enum validation-type {
+        required,
+        email,
+        url,
+        numeric,
+        date,
+        length-min,
+        length-max,
+        pattern,
+    }
+
+    /// Complete data pipeline
+    record data-pipeline {
+        name: string,
+        stages: list<pipeline-stage>,
+        error-handling: error-handling-strategy,
+        output-format: output-format,
+    }
+
+    enum error-handling-strategy {
+        fail-fast,
+        skip-errors,
+        collect-errors,
+        retry-failed,
+    }
+
+    enum output-format {
+        json,
+        csv,
+        xml,
+        custom,
+    }
+}
+
+interface exports {
+    use http.{http-header, http-response};
+    use dom.{selector};
+    use scraper.{scrape-target, scraping-result, scrape-statistics, extracted-data};
+    use pipeline.{data-pipeline};
+
+    /// Main scraping function - complex nested types in parameters and return
+    scrape-website: func(
+        target: scrape-target,
+        pipeline: option<data-pipeline>,
+        custom-headers: list<http-header>,
+    ) -> result<scraping-result, string>;
+
+    /// Batch scraping with multiple targets
+    scrape-batch: func(
+        targets: list<scrape-target>,
+        shared-config: option<data-pipeline>,
+    ) -> result<list<result<scraping-result, string>>, string>;
+
+    /// Get scraping statistics
+    get-statistics: func() -> scrape-statistics;
+
+    /// Process extracted data through pipeline
+    process-data: func(
+        data: list<extracted-data>,
+        pipeline: data-pipeline,
+    ) -> result<list<extracted-data>, string>;
+
+    /// Transform HTTP response to structured data
+    transform-response: func(
+        response: http-response,
+        selectors: list<selector>,
+    ) -> result<list<extracted-data>, string>;
+}
+
+world guest {
+    import http;
+    import dom;
+    
+    export exports;
+}

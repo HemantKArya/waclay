@@ -1,0 +1,14 @@
+[package]
+name = "file_manager_host"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasm_component_layer = { path = "../../../../wcomp_layer" }
+wasm_runtime_layer = "0.6"
+wasmi_runtime_layer = "0.51"
+anyhow = "1"
+bitflags = "2"
+
+[workspace]
+# This example is not part of the workspace

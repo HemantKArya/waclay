@@ -1,0 +1,59 @@
+package example:file-manager;
+
+world file-manager {
+    import fs-host;
+    export fs-operations;
+}
+
+interface fs-host {
+    /// Host function to check if operation is allowed
+    check-permission: func(path: string, perms: permissions) -> bool;
+    
+    /// Host logging
+    log-access: func(path: string, op: operation-type, allowed: bool);
+    
+    /// Permission flags
+    flags permissions {
+        read,
+        write,
+        execute,
+        delete
+    }
+    
+    /// Type of file operation
+    enum operation-type {
+        read-file,
+        write-file,
+        delete-file,
+        execute-file
+    }
+}
+
+interface fs-operations {
+    use fs-host.{permissions, operation-type};
+    
+    /// File metadata
+    record file-info {
+        path: string,
+        size: u64,
+        permissions: permissions,
+        exists: bool
+    }
+    
+    /// File operation result
+    variant file-result {
+        success(file-info),
+        permission-denied(string),
+        not-found,
+        io-error(string)
+    }
+    
+    /// Get file information
+    get-file-info: func(path: string) -> file-result;
+    
+    /// Modify file permissions
+    set-permissions: func(path: string, perms: permissions) -> result<_, string>;
+    
+    /// List files with specific permissions
+    list-files: func(required-perms: permissions) -> list<file-info>;
+}

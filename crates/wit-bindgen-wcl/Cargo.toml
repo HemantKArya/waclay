@@ -1,0 +1,60 @@
+[package]
+name = "wit-bindgen-wcl"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "WIT binding generator for wasm-component-layer"
+
+[dependencies]
+wit-parser = "0.219"
+anyhow = "1.0"
+heck = "0.5"
+
+[dev-dependencies]
+wasm_component_layer = { path = "../wcomp_layer" }
+wasm_runtime_layer = "0.6"
+wasmi_runtime_layer = "0.51"
+
+[[bin]]
+name = "wit-bindgen-wcl"
+path = "src/main.rs"
+
+# Example host implementations - demonstrates generated bindings
+# Note: Prefixed with "bindgen-" to avoid conflicts with wasm_component_layer examples
+
+[[example]]
+name = "bindgen-calculator"
+path = "examples/calculator/host/src/main.rs"
+
+[[example]]
+name = "bindgen-complex-return"
+path = "examples/complex_return/host/src/main.rs"
+
+[[example]]
+name = "bindgen-func-param"
+path = "examples/func_param/host/src/main.rs"
+
+[[example]]
+name = "bindgen-option-result"
+path = "examples/option_result/host/src/main.rs"
+
+[[example]]
+name = "bindgen-record-response"
+path = "examples/record_response/host/src/main.rs"
+
+[[example]]
+name = "bindgen-single-component"
+path = "examples/single_component/host/src/main.rs"
+
+[[example]]
+name = "bindgen-string-host-guest"
+path = "examples/string_host_guest/host/src/main.rs"
+
+[[example]]
+name = "bindgen-variant-return"
+path = "examples/variant_return/host/src/main.rs"
+
+[[example]]
+name = "bindgen-web-scraper"
+path = "examples/web_scraper/host/src/main.rs"

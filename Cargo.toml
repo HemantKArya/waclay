@@ -1,31 +1,23 @@
-[package]
-name = "wasm_component_layer"
+[workspace]
+members = [
+    "crates/wcomp_layer",
+    "crates/wit-bindgen-wcl",
+]
+exclude = [
+    "crates/wit-bindgen-wcl/examples/*/host",
+    "crates/wit-bindgen-wcl/examples/*/component",
+]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.3"
 edition = "2021"
 license = "Apache-2.0"
 repository = "https://github.com/DouglasDwyer/wasm_component_layer"
-readme = "README.md"
-description = """
-WebAssembly component model implementation for any backend.
-"""
 
-[dependencies]
-anyhow = { version = "1.0.100", default-features = false }
-bytemuck = { version = "1.23.2", default-features = false, features = [ "extern_crate_alloc" ] }
-fxhash = "0.2.1"
-id-arena = { version = "2.2.1", default-features = false }
-ref-cast = { version = "1.0.24", default-features = false }
-semver = { version = "1.0.27", default-features = false }
-serde = { version = "1.0.227", optional = true, default-features = false, features = [ "derive", "rc" ] }
-slab = { version = "0.4.11", default-features = false }
-wasm_runtime_layer = { version = "0.6.0", default-features = false }
-wasmtime-environ = { version = "37.0.1", features = [ "component-model", "compile" ] }
-wit-component = { version = "0.239.0", default-features = false }
-wit-parser = { version = "0.239.0", default-features = false }
+[profile.dev]
+opt-level = 0
 
-[features]
-serde = [ "dep:serde", "semver/serde" ]
-
-[dev-dependencies]
-wasmi = "0.51.1"
-wasmi_runtime_layer = "0.51"
+[profile.release]
+opt-level = 3
+lto = "thin"

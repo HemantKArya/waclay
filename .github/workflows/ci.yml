@@ -8,9 +8,9 @@ on:
       - '**/Cargo.toml'
       - '**/Cargo.lock'
       - '.github/workflows/**'
-      - 'examples/**/wit/**'
-      - 'src/**'
-      - 'examples/**/src/**'
+      - 'crates/**/wit/**'
+      - 'crates/**/src/**'
+      - 'crates/**/examples/**'
   pull_request:
     branches: [ master, main ]
     paths:
@@ -18,150 +18,309 @@ on:
       - '**/Cargo.toml'
       - '**/Cargo.lock'
       - '.github/workflows/**'
-      - 'examples/**/wit/**'
-      - 'src/**'
-      - 'examples/**/src/**'
+      - 'crates/**/wit/**'
+      - 'crates/**/src/**'
+      - 'crates/**/examples/**'
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
-    name: Test
+  # ============================================================
+  # Workspace-level Tests
+  # ============================================================
+  workspace:
+    name: Workspace Build & Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          # Native compilation for different targets
-          - target: x86_64-unknown-linux-gnu
-            os_name: linux-x86_64
-          - target: x86_64-pc-windows-gnu
-            os_name: windows-x86_64
-          - target: aarch64-unknown-linux-gnu
-            os_name: linux-aarch64
-          - target: armv7-unknown-linux-gnueabihf
-            os_name: linux-armv7
-          # Android targets
-          - target: aarch64-linux-android
-            os_name: android-aarch64
-          - target: armv7-linux-androideabi
-            os_name: android-armv7
-          - target: x86_64-linux-android
-            os_name: android-x86_64
-          - target: i686-linux-android
-            os_name: android-i686
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Rust
+    - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: ${{ matrix.target }}
 
-    - name: Install cross-compilation tools
-      if: matrix.target != 'x86_64-unknown-linux-gnu'
-      run: |
-        if [[ "${{ matrix.target }}" == *"android"* ]]; then
-          sudo apt-get update
-          sudo apt-get install -y unzip
-          wget -q https://dl.google.com/android/repository/android-ndk-r27d-linux.zip
-          unzip -q android-ndk-r27d-linux.zip
-          echo "ANDROID_NDK_HOME=$PWD/android-ndk-r27d" >> $GITHUB_ENV
-          echo "$PWD/android-ndk-r27d/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
-        elif [[ "${{ matrix.target }}" == *"aarch64"* ]]; then
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_AR=aarch64-linux-gnu-ar" >> $GITHUB_ENV
-        elif [[ "${{ matrix.target }}" == *"armv7"* ]]; then
-          sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf
-          echo "CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc" >> $GITHUB_ENV
-          echo "CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_AR=arm-linux-gnueabihf-ar" >> $GITHUB_ENV
-        elif [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]; then
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64
-          echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
-          echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_AR=x86_64-w64-mingw32-ar" >> $GITHUB_ENV
-        fi
-
-    - name: Install cargo-ndk
-      if: contains(matrix.target, 'android')
-      run: cargo install cargo-ndk --locked
-
-    - name: Cache Cargo registry
+    - name: Cache dependencies
       uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          target
+        key: ${{ runner.os }}-cargo-workspace-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
-          ${{ runner.os }}-cargo-
+          ${{ runner.os }}-cargo-workspace-
 
-    - name: Cache target directory
-      uses: actions/cache@v4
-      with:
-        path: target
-        key: ${{ runner.os }}-target-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-target-${{ matrix.target }}-
+    - name: Build entire workspace
+      run: cargo build --workspace
 
-    - name: Run cargo check
-      run: cargo check --workspace --all-targets --target ${{ matrix.target }}
+    - name: Test entire workspace
+      run: cargo test --workspace
 
-    - name: Run tests (native targets only)
-      if: matrix.target == 'x86_64-unknown-linux-gnu'
-      run: cargo test --workspace --target ${{ matrix.target }}
+    - name: Check workspace documentation
+      run: cargo doc --workspace --no-deps
 
-    - name: Build examples
-      run: |
-        core_examples=(
-          record_response
-          complex_return
-          variant_return
-          func_param
-          string_host_guest
-        )
-
-        if [[ "${{ matrix.target }}" == *"android"* ]]; then
-          for example in "${core_examples[@]}"; do
-            cargo ndk --target ${{ matrix.target }} --platform 21 build --example "$example"
-          done
-        else
-          for example in "${core_examples[@]}"; do
-            cargo build --example "$example" --target ${{ matrix.target }}
-          done
-
-          if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
-            cargo build --example guest_resource --target ${{ matrix.target }}
-            cargo build --example multilevel_resource --target ${{ matrix.target }}
-            cargo build --example option_result --target ${{ matrix.target }}
-            cargo build --example resource --target ${{ matrix.target }}
-            cargo build --example single_component --target ${{ matrix.target }}
-          fi
-        fi
-
-    - name: Run example tests (native Linux only)
-      if: matrix.target == 'x86_64-unknown-linux-gnu'
-      run: |
-        cargo run --example record_response
-        cargo run --example complex_return
-        cargo run --example variant_return
-        cargo run --example func_param
-        cargo run --example string_host_guest
-
-  wasm-test:
-    name: WebAssembly Tests
+  # ============================================================
+  # wcomp_layer Crate Tests
+  # ============================================================
+  wcomp_layer:
+    name: Test wcomp_layer
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Rust
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-wcomp-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-wcomp-
+
+    - name: Run wcomp_layer tests
+      working-directory: crates/wcomp_layer
+      run: cargo test
+
+    - name: Build wcomp_layer examples
+      working-directory: crates/wcomp_layer
+      run: cargo build --examples
+
+    - name: Test core examples
+      working-directory: crates/wcomp_layer
+      run: |
+        echo "Testing single_component example..."
+        cargo run --example single_component
+        echo "Testing record_response example..."
+        cargo run --example record_response
+        echo "Testing complex_return example..."
+        cargo run --example complex_return
+        echo "Testing variant_return example..."
+        cargo run --example variant_return
+        echo "Testing func_param example..."
+        cargo run --example func_param
+        echo "Testing string_host_guest example..."
+        cargo run --example string_host_guest
+
+  # ============================================================
+  # wit-bindgen-wcl Crate Tests
+  # ============================================================
+  wit_bindgen_wcl:
+    name: Test wit-bindgen-wcl
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-bindgen-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-bindgen-
+
+    - name: Run wit-bindgen-wcl tests
+      working-directory: crates/wit-bindgen-wcl
+      run: cargo test
+
+    - name: Build wit-bindgen-wcl binary
+      working-directory: crates/wit-bindgen-wcl
+      run: cargo build --bin wit-bindgen-wcl
+
+    - name: Test wit-bindgen-wcl binary (--help)
+      working-directory: crates/wit-bindgen-wcl
+      run: cargo run --bin wit-bindgen-wcl -- --help || [ $? -eq 1 ]
+
+    - name: Regenerate WIT bindings for all examples
+      working-directory: crates/wit-bindgen-wcl
+      run: |
+        echo "Regenerating bindings for all examples..."
+        
+        examples=(
+          "calculator"
+          "complex_return"
+          "func_param"
+          "option_result"
+          "record_response"
+          "single_component"
+          "string_host_guest"
+          "variant_return"
+          "web_scraper"
+        )
+        
+        for example in "${examples[@]}"; do
+          echo "Regenerating bindings for $example..."
+          cargo run --bin wit-bindgen-wcl -- \
+            examples/$example/component/wit \
+            examples/$example/host/src/bindings.rs
+        done
+
+    - name: Build all wit-bindgen-wcl examples
+      working-directory: crates/wit-bindgen-wcl
+      run: cargo build --examples
+
+    - name: Test wit-bindgen-wcl examples
+      working-directory: crates/wit-bindgen-wcl
+      run: |
+        echo "Testing calculator example..."
+        cargo run --example bindgen-calculator
+        
+        echo "Testing single-component example..."
+        cargo run --example bindgen-single-component
+        
+        echo "Testing complex-return example..."
+        cargo run --example bindgen-complex-return
+        
+        echo "Testing func-param example..."
+        cargo run --example bindgen-func-param
+        
+        echo "Testing option-result example..."
+        cargo run --example bindgen-option-result
+        
+        echo "Testing record-response example..."
+        cargo run --example bindgen-record-response
+        
+        echo "Testing string-host-guest example..."
+        cargo run --example bindgen-string-host-guest
+        
+        echo "Testing variant-return example..."
+        cargo run --example bindgen-variant-return
+        
+        echo "Testing web-scraper example..."
+        cargo run --example bindgen-web-scraper
+
+  # ============================================================
+  # Cross-platform Compilation Tests
+  # ============================================================
+  cross_compile:
+    name: Cross-compile (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-pc-windows-gnu
+            packages: mingw-w64
+          - target: aarch64-unknown-linux-gnu
+            packages: gcc-aarch64-linux-gnu
+          - target: armv7-unknown-linux-gnueabihf
+            packages: gcc-arm-linux-gnueabihf
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Install cross-compilation tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.packages }}
+
+    - name: Configure linker
+      run: |
+        target_upper=$(echo ${{ matrix.target }} | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+        if [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]; then
+          echo "CARGO_TARGET_${target_upper}_LINKER=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
+        elif [[ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]]; then
+          echo "CARGO_TARGET_${target_upper}_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+        elif [[ "${{ matrix.target }}" == "armv7-unknown-linux-gnueabihf" ]]; then
+          echo "CARGO_TARGET_${target_upper}_LINKER=arm-linux-gnueabihf-gcc" >> $GITHUB_ENV
+        fi
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-${{ matrix.target }}-
+
+    - name: Build for target
+      run: cargo build --workspace --target ${{ matrix.target }}
+
+  # ============================================================
+  # Android Platform Tests
+  # ============================================================
+  android:
+    name: Android Build (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - aarch64-linux-android
+          - armv7-linux-androideabi
+          - x86_64-linux-android
+          - i686-linux-android
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Install Android NDK
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y unzip
+        wget -q https://dl.google.com/android/repository/android-ndk-r27d-linux.zip
+        unzip -q android-ndk-r27d-linux.zip
+        echo "ANDROID_NDK_HOME=$PWD/android-ndk-r27d" >> $GITHUB_ENV
+        echo "$PWD/android-ndk-r27d/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
+
+    - name: Install cargo-ndk
+      run: cargo install cargo-ndk --locked
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-android-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-android-${{ matrix.target }}-
+
+    - name: Build wcomp_layer for Android
+      working-directory: crates/wcomp_layer
+      run: cargo ndk --target ${{ matrix.target }} --platform 21 build
+
+  # ============================================================
+  # WebAssembly Component Tests
+  # ============================================================
+  wasm_components:
+    name: WebAssembly Component Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
         targets: wasm32-unknown-unknown,wasm32-wasip1
@@ -171,58 +330,72 @@ jobs:
         curl -sSfL https://github.com/bytecodealliance/wasm-tools/releases/download/v1.239.0/wasm-tools-1.239.0-x86_64-linux.tar.gz | tar xzf -
         sudo mv wasm-tools-1.239.0-x86_64-linux/wasm-tools /usr/local/bin/
 
-    - name: Cache Cargo registry
+    - name: Cache dependencies
       uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
-        key: ubuntu-wasm-cargo-${{ hashFiles('**/Cargo.lock') }}
+          target
+        key: ${{ runner.os }}-cargo-wasm-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
-          ubuntu-wasm-cargo-
+          ${{ runner.os }}-cargo-wasm-
 
-    - name: Cache target directory
-      uses: actions/cache@v4
-      with:
-        path: target
-        key: ubuntu-wasm-target-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ubuntu-wasm-target-
-
-    - name: Build WebAssembly examples
+    - name: Build WebAssembly components (wcomp_layer examples)
+      working-directory: crates/wcomp_layer/examples
       run: |
-        # Use bash scripts for cross-platform compatibility
-        cd examples/complex_return && chmod +x build.sh && ./build.sh
-        cd ../variant_return && chmod +x build.sh && ./build.sh
-        cd ../record_response && chmod +x build.sh && ./build.sh
-        cd ../func_param && chmod +x build.sh && ./build.sh
-        cd ../string_host_guest && chmod +x build.sh && ./build.sh
-        cd ../single_component && chmod +x build.sh && ./build.sh
-        cd ../guest_resource && chmod +x build.sh && ./build.sh
-        cd ../multilevel_resource && chmod +x build.sh && ./build.sh
-        cd ../option_result && chmod +x build.sh && ./build.sh
-        cd ../resource && chmod +x build.sh && ./build.sh
+        for dir in */; do
+          if [ -f "${dir}build.sh" ]; then
+            echo "Building component in $dir..."
+            cd "$dir"
+            chmod +x build.sh
+            ./build.sh
+            cd ..
+          fi
+        done
 
+  # ============================================================
+  # Code Quality Checks
+  # ============================================================
   lint:
-    name: Lint
+    name: Lint & Format
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Rust
+    - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
         components: rustfmt, clippy
 
-    - name: Check formatting
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-lint-
+
+    - name: Check code formatting
       run: cargo fmt --all -- --check
 
-    - name: Run clippy
-      run: cargo clippy --workspace --all-targets -- -D warnings
+    - name: Run clippy (wcomp_layer)
+      working-directory: crates/wcomp_layer
+      run: cargo clippy --all-targets -- -D warnings
 
-  audit:
+    - name: Run clippy (wit-bindgen-wcl)
+      working-directory: crates/wit-bindgen-wcl
+      run: cargo clippy --all-targets -- -D warnings
+
+  # ============================================================
+  # Security Audit
+  # ============================================================
+  security:
     name: Security Audit
     runs-on: ubuntu-latest
 
@@ -230,11 +403,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install Rust
+    - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
 
     - name: Install cargo-audit
-      run: cargo install cargo-audit
+      run: cargo install cargo-audit --locked
 
     - name: Run security audit
       run: cargo audit

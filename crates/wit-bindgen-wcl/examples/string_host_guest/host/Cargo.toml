@@ -1,0 +1,18 @@
+[package]
+name = "string_host_guest_host"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasm_component_layer = { path = "../../../../wcomp_layer" }
+wasm_runtime_layer = "0.6"
+wasmi_runtime_layer = "0.51"
+anyhow = "1.0"
+
+# Binary that uses traditional generated bindings
+[[bin]]
+name = "string_host_guest"
+path = "src/main.rs"
+
+[workspace]
+# This example is not part of the workspace

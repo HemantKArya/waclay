@@ -1,0 +1,47 @@
+package example:calculator;
+
+world calculator {
+    import logger;
+    export operations;
+}
+
+interface logger {
+    /// Log a message from the calculator
+    log: func(level: log-level, message: string);
+    
+    enum log-level {
+        info,
+        warning,
+        error
+    }
+}
+
+interface operations {
+    /// Basic arithmetic operations
+    enum operation {
+        add,
+        subtract,
+        multiply,
+        divide
+    }
+    
+    /// Result of a calculation
+    record calc-result {
+        value: f64,
+        operation: operation,
+        success: bool
+    }
+    
+    /// Error types for calculations
+    variant calc-error {
+        division-by-zero,
+        overflow,
+        invalid-operation(string)
+    }
+    
+    /// Perform a calculation
+    calculate: func(op: operation, a: f64, b: f64) -> result<calc-result, calc-error>;
+    
+    /// Get calculation history
+    get-history: func() -> list<calc-result>;
+}
