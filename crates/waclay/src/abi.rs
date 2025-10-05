@@ -927,18 +927,20 @@ impl<'a, B: Bindgen> Generator<'a, B> {
         };
         self.emit(&disc_val)?;
 
-        let discriminant = if let ExtractVariantDiscriminant { discriminant_value } = disc_val {
-            discriminant_value.get().0
-        } else {
-            unreachable!()
-        };
+        let (discriminant, has_payload) =
+            if let ExtractVariantDiscriminant { discriminant_value } = disc_val {
+                let (disc, has_payload) = discriminant_value.get();
+                (disc, has_payload)
+            } else {
+                unreachable!()
+            };
 
         let mut results = Vec::new();
         let mut temp = Vec::new();
         let mut casts = Vec::new();
         push_wasm(self.resolve, self.variant, ty, &mut results);
 
-        let payload_name = self.stack.pop();
+        let payload_name = if has_payload { self.stack.pop() } else { None };
         self.emit(&I32Const { val: discriminant })?;
         let mut pushed = 1;
         if let Some(ty) = cases
