@@ -1,0 +1,16 @@
+[workspace]
+
+[package]
+name = "toplevel-functions-host"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "toplevel-host"
+path = "src/main.rs"
+
+[dependencies]
+waclay = { path = "../../../../waclay" }
+wasm_runtime_layer = "0.6.0"
+wasmi_runtime_layer = "0.51.0"
+anyhow = "1.0"

@@ -67,10 +67,11 @@ This architecture is **essential** for the WASM ecosystem as we wait for the Com
 
 - ✨ **Type-Safe Bindings** - Generates strongly-typed Rust code from WIT definitions
 - 🎯 **Easy Integration** - Simple workflow from WIT → Rust bindings → Host application
+- 🚀 **Top-Level Functions** - Full support for top-level function imports and exports (not just interfaces)
 - 🔧 **Active Development** - Basic features working for simple use cases (see examples)
 - 🤝 **Community Needed** - Heavy development in progress, contributions welcome!
 
-**Current Status:** Works for simple to moderate complexity WIT files. See the `examples/` directory for supported patterns.
+**Current Status:** Works for simple to moderate complexity WIT files. Supports top-level functions, interfaces, records, variants, enums, options, results, and more. See the `examples/` directory for supported patterns.
 
 ---
 
@@ -254,6 +255,26 @@ use bindings::*;  // Type-safe functions generated from WIT
 // Much more ergonomic than raw Value manipulation!
 ```
 
+#### Top-Level Function Support (NEW!)
+
+wit-bindgen-wcl now supports top-level functions in WIT worlds:
+
+```wit
+world example {
+    // Top-level imports (host provides)
+    import multiply: func(a: f32, b: f32) -> f32;
+    
+    // Top-level exports (guest provides)
+    export add: func(a: f32, b: f32) -> f32;
+}
+```
+
+The generator creates:
+- **For imports**: Host traits and registration functions using `linker.root_mut()`
+- **For exports**: Helper functions to access via `instance.exports().root()`
+
+This matches the wasmtime/wit-bindgen behavior and enables more flexible component designs.
+
 ---
 
 ## 🎯 How It Works
@@ -361,7 +382,7 @@ cd waclay
 
 ## 📚 Examples
 
-This repository includes **19 comprehensive examples** demonstrating various features:
+This repository includes **20 comprehensive examples** demonstrating various features:
 
 ### 🔹 Core Library Examples (10 examples)
 
@@ -385,7 +406,7 @@ cargo run --example guest_resource       # ✅ Guest-defined resources
 cargo run --example multilevel_resource  # ✅ Multi-level resources
 ```
 
-### 🔸 Generated Bindings Examples (9 examples)
+### 🔸 Generated Bindings Examples (10 examples)
 
 Using `wit-bindgen-wcl` for type-safe, ergonomic code:
 
@@ -400,6 +421,10 @@ cargo run --example bindgen-record-response    # ✅ Record types with bindings
 cargo run --example bindgen-option-result      # ✅ Option and Result with bindings
 cargo run --example bindgen-variant-return     # ✅ Variant types with bindings
 cargo run --example bindgen-complex-return     # ✅ Complex return types with bindings
+
+# NEW: Top-level function support
+cd crates/wit-bindgen-wcl/examples/toplevel-functions/host && cargo run --release
+                                                # ✅ Top-level function imports & exports
 ```
 
 > **💡 Tip:** Examples prefixed with `bindgen-` use generated bindings (more ergonomic), while others use the raw API (more flexible).
@@ -467,10 +492,13 @@ waclay = { git = "https://github.com/HemantKArya/waclay", features = ["serde"] }
 
 ## 📋 Supported Capabilities
 
+> **📄 For a comprehensive feature comparison with wasmtime/wit-bindgen, see [FEATURES.md](FEATURES.md)**
+
 ### ✅ Fully Supported
 
 - ✅ Component parsing and instantiation
 - ✅ All WIT types (records, variants, enums, options, results, etc.)
+- ✅ Top-level functions (imports and exports)
 - ✅ Specialized list types for performance
 - ✅ Structural type equality
 - ✅ Guest resources
@@ -480,16 +508,25 @@ waclay = { git = "https://github.com/HemantKArya/waclay", features = ["serde"] }
 
 ### 🚧 In Progress
 
-- 🚧 `wit-bindgen-wcl` - Basic features working, expanding coverage
+- 🚧 Resource type bindings in `wit-bindgen-wcl`
 - 🚧 Comprehensive testing suite
 - 🚧 Documentation and tutorials
 
+### ❌ Not Supported
+
+- ❌ Future types (`future<T>`) - Requires async runtime support in core
+- ❌ Stream types (`stream<T>`) - Requires async runtime support in core
+- ❌ Async/await patterns - Fundamental limitation requiring core changes
+
 ### 📋 Planned
 
+- 📋 Resource bindings generation in wit-bindgen-wcl
 - 📋 String transcoders
 - 📋 Host binding macros
 - 📋 Subtyping support
 - 📋 Performance benchmarks
+
+> **Note**: For detailed feature comparison and workarounds, see [FEATURES.md](FEATURES.md)
 
 ---
 

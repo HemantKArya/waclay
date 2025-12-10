@@ -200,6 +200,19 @@ impl<'a> BindingsGenerator<'a> {
         }
 
         let typedef = &self.resolve.types[type_id];
+        
+        // Skip Handle types - they're references to resources, not standalone types
+        if matches!(typedef.kind, TypeDefKind::Handle(_)) {
+            // But we do need to collect the underlying resource type
+            if let TypeDefKind::Handle(handle) = &typedef.kind {
+                let resource_id = match handle {
+                    wit_parser::Handle::Own(id) | wit_parser::Handle::Borrow(id) => *id,
+                };
+                self.collect_type(resource_id);
+            }
+            return;
+        }
+        
         let name = typedef
             .name
             .as_ref()
@@ -270,7 +283,7 @@ impl<'a> BindingsGenerator<'a> {
         writeln!(output, "// ========== Host Imports ==========")?;
         writeln!(output)?;
 
-        // Generate trait definitions for each interface
+        // Generate trait definitions for each interface and top-level function
         for (name, item) in &imports {
             match item {
                 WorldItem::Interface { id: iface_id, .. } => {
@@ -278,10 +291,10 @@ impl<'a> BindingsGenerator<'a> {
                     let name_str = self.resolve.name_world_key(name);
                     generate_import_trait(self.resolve, &name_str, iface, *iface_id, output)?;
                 }
-                WorldItem::Function(_func) => {
+                WorldItem::Function(func) => {
                     // Top-level function import
                     let name_str = self.resolve.name_world_key(name);
-                    writeln!(output, "// TODO: Top-level function import: {}", name_str)?;
+                    generate_toplevel_import_trait(self.resolve, &name_str, func, output)?;
                 }
                 _ => {}
             }
@@ -293,16 +306,24 @@ impl<'a> BindingsGenerator<'a> {
         writeln!(output)?;
 
         for (name, item) in &imports {
-            if let WorldItem::Interface { id: iface_id, .. } = item {
-                let iface = &self.resolve.interfaces[*iface_id];
-                let name_str = self.resolve.name_world_key(name);
-                generate_import_registration_function(
-                    self.resolve,
-                    &name_str,
-                    iface,
-                    *iface_id,
-                    output,
-                )?;
+            match item {
+                WorldItem::Interface { id: iface_id, .. } => {
+                    let iface = &self.resolve.interfaces[*iface_id];
+                    let name_str = self.resolve.name_world_key(name);
+                    generate_import_registration_function(
+                        self.resolve,
+                        &name_str,
+                        iface,
+                        *iface_id,
+                        output,
+                    )?;
+                }
+                WorldItem::Function(func) => {
+                    // Top-level function import
+                    let name_str = self.resolve.name_world_key(name);
+                    generate_toplevel_import_registration(self.resolve, &name_str, func, output)?;
+                }
+                _ => {}
             }
         }
 
@@ -330,9 +351,10 @@ impl<'a> BindingsGenerator<'a> {
                     let name_str = self.resolve.name_world_key(name);
                     generate_export_interface(self.resolve, &name_str, iface, output)?;
                 }
-                WorldItem::Function(_func) => {
+                WorldItem::Function(func) => {
+                    // Top-level function export
                     let name_str = self.resolve.name_world_key(name);
-                    writeln!(output, "// TODO: Top-level function export: {}", name_str)?;
+                    generate_toplevel_export_helper(self.resolve, &name_str, func, output)?;
                 }
                 _ => {}
             }

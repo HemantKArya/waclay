@@ -1,0 +1,11 @@
+package example:toplevel;
+
+world toplevel {
+    // Top-level function imports (provided by host)
+    import multiply: func(a: f32, b: f32) -> f32;
+    import log-message: func(message: string);
+    
+    // Top-level function exports (provided by guest)
+    export add: func(a: f32, b: f32) -> f32;
+    export compute: func(x: f32, y: f32) -> f32;
+}
