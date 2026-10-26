@@ -11,7 +11,7 @@ members = [
 exclude = ["waclay"]
 
 [workspace.package]
-version = "2.0.0"
+version = "2.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/HemantKArya/waclay"
@@ -21,11 +21,11 @@ categories = ["wasm", "api-bindings", "development-tools"]
 rust-version = "1.97"
 
 [workspace.dependencies]
-waclay = { version = "2.0.0", path = "crates/waclay" }
-waclay-macros = { version = "2.0.0", path = "crates/waclay-macros" }
-waclay-wasmi = { version = "2.0.0", path = "crates/backends/waclay-wasmi" }
-waclay-wasmtime = { version = "2.0.0", path = "crates/backends/waclay-wasmtime" }
-waclay-wasmer = { version = "2.0.0", path = "crates/backends/waclay-wasmer" }
+waclay = { version = "2.0.1", path = "crates/waclay" }
+waclay-macros = { version = "2.0.1", path = "crates/waclay-macros" }
+waclay-wasmi = { version = "2.0.1", path = "crates/backends/waclay-wasmi" }
+waclay-wasmtime = { version = "2.0.1", path = "crates/backends/waclay-wasmtime" }
+waclay-wasmer = { version = "2.0.1", path = "crates/backends/waclay-wasmer" }
 
 # decoding / WIT toolchain (version-locked across the workspace)
 wasmparser = "0.262"

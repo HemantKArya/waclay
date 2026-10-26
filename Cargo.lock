@@ -2930,7 +2930,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "waclay"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "criterion",
  "thiserror 2.0.21",
@@ -2949,7 +2949,7 @@ dependencies = [
 
 [[package]]
 name = "waclay-cli"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "serde_json",
  "waclay",
@@ -2960,7 +2960,7 @@ dependencies = [
 
 [[package]]
 name = "waclay-macros"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2968,7 +2968,7 @@ dependencies = [
 
 [[package]]
 name = "waclay-wasmer"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "waclay",
  "wasmer",
@@ -2976,7 +2976,7 @@ dependencies = [
 
 [[package]]
 name = "waclay-wasmi"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "waclay",
  "wasmi",
@@ -2985,7 +2985,7 @@ dependencies = [
 
 [[package]]
 name = "waclay-wasmtime"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "waclay",
  "wasmtime",
