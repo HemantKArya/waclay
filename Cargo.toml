@@ -34,7 +34,7 @@ wit-parser = "0.262"
 wasm-encoder = "0.262"
 
 # engines
-wasmi = "2.0.1"
+wasmi = "2.0.0"
 wasmtime = { version = "50.0.0", default-features = true }
 wasmer = "7"
 
