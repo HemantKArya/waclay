@@ -370,7 +370,7 @@ pub trait WasmEngine: Send + Sync + 'static {
     /// Human readable engine name (`"wasmi"`, `"wasmtime"`, ...).
     fn name(&self) -> &'static str;
 
-    /// Version of the underlying engine crate (e.g. `"2.0.0"` for wasmi,
+    /// Version of the underlying engine crate (e.g. `"2.0.1"` for wasmi,
     /// `"50.0.0"` for wasmtime, `"7.5.0"` for wasmer).
     fn version(&self) -> &'static str;
 
@@ -428,7 +428,7 @@ impl Engine {
         self.inner.version()
     }
 
-    /// `"wasmi 2.0.0"`-style one-line engine description.
+    /// `"wasmi 2.0.1"`-style one-line engine description.
     pub fn describe(&self) -> String {
         format!("{} {}", self.inner.name(), self.inner.version())
     }

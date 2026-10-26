@@ -1,7 +1,7 @@
 # Waclay 2.0 — Benchmarks
 
 Latest run: **2026-10-25**, Linux x86_64, rustc **1.99.1**, `--release` bench
-profile, criterion 0.8, engines wasmi **2.0.0** / wasmtime **50.0.0** /
+profile, criterion 0.8, engines wasmi **2.0.1** / wasmtime **50.0.0** /
 wasmer **7.5.0**. Absolute numbers are environment-specific; the **ratios**
 are the point.
 

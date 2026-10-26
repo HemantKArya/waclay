@@ -23,7 +23,7 @@ use waclay::{Error, Result};
 pub const ENGINE_NAME: &str = "wasmi";
 
 /// Version of the wasmi crate this backend is built against.
-pub const WASMI_VERSION: &str = "2.0.0";
+pub const WASMI_VERSION: &str = "2.0.1";
 
 /// Host data kept inside the wasmi store.
 struct StoreData {
