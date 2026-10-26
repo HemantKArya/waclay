@@ -110,11 +110,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # i686-linux-android is not built: wasmer-vm has no unwind register
+        # mapping for 32-bit x86, so the wasmer backend cannot compile there.
         target:
           - aarch64-linux-android
           - armv7-linux-androideabi
           - x86_64-linux-android
-          - i686-linux-android
 
     steps:
     - name: Checkout code

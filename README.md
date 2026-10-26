@@ -132,7 +132,9 @@ waclay/
 | `waclay-wasmi` | wasmi (interpreter) | yes | yes | yes | yes |
 
 wasmer 7.3 removed its native compilers on Windows, so `waclay-wasmer` is not built there. The
-rest of the workspace, including the tests and the CLI, skips it automatically.
+rest of the workspace, including the tests and the CLI, skips it automatically. On Android,
+`waclay-wasmer` needs a 64-bit or ARM target (aarch64, armv7, x86_64); wasmer does not support
+32-bit x86 (`i686-linux-android`), which CI does not build.
 
 Every engine runs the same test suite and must give identical results:
 
