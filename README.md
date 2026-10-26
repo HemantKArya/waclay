@@ -236,7 +236,7 @@ version is 1.97, which wasmtime 50 requires. Benchmarks: `cargo bench -p waclay`
 - [x] wasmtime, wasmer and wasmi backends
 - [x] WASI P1, P2 and P3 primitives
 - [x] `bindgen!`
-- [ ] Publish 2.0 to crates.io
+- [x] Publish 2.0 to crates.io
 - [ ] More WASI interfaces (filesystem, sockets, http)
 - [ ] Additional engine backends
 - [ ] Fuzzing the lift and lower paths
