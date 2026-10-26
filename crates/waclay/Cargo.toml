@@ -22,14 +22,16 @@ wasm-encoder = "0.262"
 wit-component = { workspace = true }
 wit-parser = { workspace = true }
 wat = { workspace = true }
-waclay-wasmi = { workspace = true }
-waclay-wasmtime = { workspace = true }
+# Path-only (no version): backends depend on waclay, so these dev-dependencies
+# are stripped when publishing and the crates can be released in order.
+waclay-wasmi = { path = "../backends/waclay-wasmi" }
+waclay-wasmtime = { path = "../backends/waclay-wasmtime" }
 criterion = { workspace = true }
 wasmi = { workspace = true }
 wasmtime = { workspace = true, features = ["cranelift", "runtime", "component-model"] }
 
 [target.'cfg(not(windows))'.dev-dependencies]
-waclay-wasmer = { workspace = true }
+waclay-wasmer = { path = "../backends/waclay-wasmer" }
 
 [[bench]]
 name = "bench"

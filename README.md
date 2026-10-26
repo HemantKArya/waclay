@@ -123,6 +123,19 @@ waclay/
 └── docs/                    benchmarks
 ```
 
+## Crates
+
+Waclay is published as several crates so you only compile the engines you use.
+
+| Crate | Purpose | Add it when |
+|---|---|---|
+| [`waclay`](https://crates.io/crates/waclay) | Core library: component decoding, Canonical ABI, linker, WASI, `bindgen!` | always |
+| [`waclay-wasmtime`](https://crates.io/crates/waclay-wasmtime) | wasmtime backend | you want the wasmtime JIT |
+| [`waclay-wasmer`](https://crates.io/crates/waclay-wasmer) | wasmer backend | you want the wasmer JIT (not on Windows) |
+| [`waclay-wasmi`](https://crates.io/crates/waclay-wasmi) | wasmi backend | you want a small, pure-Rust interpreter |
+| [`waclay-cli`](https://crates.io/crates/waclay-cli) | `waclay-cli` command-line tool | you want to inspect or run components from a terminal |
+| [`waclay-macros`](https://crates.io/crates/waclay-macros) | Procedural macro behind `bindgen!` | never directly; `waclay` re-exports it |
+
 ## Engines and platforms
 
 | Backend crate | Engine | Linux | macOS | Android | Windows |
