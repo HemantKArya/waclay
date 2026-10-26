@@ -1,7 +1,13 @@
-.DS_Store
+# build output
 **/target/
-/Cargo.lock
-/examples/*/target/
-/examples/*/Cargo.lock
-/examples/*/component.wat
-examples/guest_resource/src/bindings.rs
+
+# editor / OS noise
+*.swp
+.DS_Store
+
+# generated test artifacts
+adder.component.wasm
+Cargo.lock.bak
+
+# local reference checkout of the previous major version (not part of this tree)
+/waclay/

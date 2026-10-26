@@ -1,0 +1,21 @@
+[package]
+name = "waclay-wasmer"
+description = "wasmer (Cranelift JIT) backend for Waclay; not built on Windows."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+waclay = { workspace = true }
+
+# wasmer 7.3+ dropped its native compilers (Cranelift/Singlepass) on Windows
+# (see wasmer's CHANGELOG, "drop Windows support for Sys"), and its V8 backend
+# needs a libclang + GNU binutils toolchain. The backend is therefore built on
+# every target except Windows; on Windows use waclay-wasmtime or waclay-wasmi.
+[target.'cfg(not(windows))'.dependencies]
+wasmer = { workspace = true }

@@ -1,29 +1,63 @@
 [workspace]
+resolver = "2"
 members = [
     "crates/waclay",
-    "crates/wit-bindgen-wcl",
+    "crates/waclay-macros",
+    "crates/backends/waclay-wasmi",
+    "crates/backends/waclay-wasmtime",
+    "crates/backends/waclay-wasmer",
+    "crates/waclay-cli",
 ]
-exclude = [
-    "crates/waclay/examples/*",
-    "crates/wit-bindgen-wcl/examples/*/host",
-    "crates/wit-bindgen-wcl/examples/*/component",
-]
-resolver = "2"
+exclude = ["waclay"]
 
 [workspace.package]
-version = "0.2.2"
+version = "2.0.0"
 edition = "2021"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/HemantKArya/waclay"
-description = "Runtime-agnostic WebAssembly Component Model implementation"
 homepage = "https://github.com/HemantKArya/waclay"
-readme = "README.md"
 keywords = ["wasm", "webassembly", "component-model", "wit", "runtime-agnostic"]
 categories = ["wasm", "api-bindings", "development-tools"]
+rust-version = "1.97"
 
-[profile.dev]
-opt-level = 0
+[workspace.dependencies]
+waclay = { version = "2.0.0", path = "crates/waclay" }
+waclay-macros = { version = "2.0.0", path = "crates/waclay-macros" }
+waclay-wasmi = { version = "2.0.0", path = "crates/backends/waclay-wasmi" }
+waclay-wasmtime = { version = "2.0.0", path = "crates/backends/waclay-wasmtime" }
+waclay-wasmer = { version = "2.0.0", path = "crates/backends/waclay-wasmer" }
+
+# decoding / WIT toolchain (version-locked across the workspace)
+wasmparser = "0.262"
+wit-component = "0.262"
+wit-parser = "0.262"
+wasm-encoder = "0.262"
+
+# engines
+wasmi = "2.0.0"
+wasmtime = { version = "50.0.0", default-features = true }
+wasmer = "7"
+
+# dev / test
+wat = "1.262"
+criterion = "0.8"
+
+thiserror = "2"
 
 [profile.release]
-opt-level = 3
 lto = "thin"
+codegen-units = 1
+strip = "debuginfo"
+
+[profile.bench]
+debug = false
+opt-level = 2
+codegen-units = 16
+
+[profile.dev]
+debug = 0
+debug-assertions = true
+
+[profile.test]
+debug = 0
+debug-assertions = true

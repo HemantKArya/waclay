@@ -17,11 +17,15 @@ env:
 
 jobs:
   # ============================================================
-  # Workspace-level Tests
+  # Workspace Build & Test (all desktop platforms)
   # ============================================================
   workspace:
-    name: Workspace Build & Test
-    runs-on: ubuntu-latest
+    name: Build & Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
     - name: Checkout code
@@ -42,157 +46,13 @@ jobs:
           ${{ runner.os }}-cargo-workspace-
 
     - name: Build entire workspace
-      run: cargo build --workspace
+      run: cargo build --workspace --release
 
     - name: Test entire workspace
-      run: cargo test --workspace
+      run: cargo test --workspace --release
 
     - name: Check workspace documentation
       run: cargo doc --workspace --no-deps
-
-  # ============================================================
-  # waclay Crate Tests
-  # ============================================================
-  waclay:
-    name: Test waclay
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-waclay-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-waclay-
-
-    - name: Run waclay tests
-      working-directory: crates/waclay
-      run: cargo test
-
-    - name: Build waclay examples
-      working-directory: crates/waclay
-      run: cargo build --examples
-
-    - name: Test core examples
-      working-directory: crates/waclay
-      run: |
-        echo "Testing single_component example..."
-        cargo run --example single_component
-        echo "Testing record_response example..."
-        cargo run --example record_response
-        echo "Testing complex_return example..."
-        cargo run --example complex_return
-        echo "Testing variant_return example..."
-        cargo run --example variant_return
-        echo "Testing func_param example..."
-        cargo run --example func_param
-        echo "Testing string_host_guest example..."
-        cargo run --example string_host_guest
-
-  # ============================================================
-  # wit-bindgen-wcl Crate Tests
-  # ============================================================
-  wit_bindgen_wcl:
-    name: Test wit-bindgen-wcl
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-bindgen-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-bindgen-
-
-    - name: Run wit-bindgen-wcl tests
-      working-directory: crates/wit-bindgen-wcl
-      run: cargo test
-
-    - name: Build wit-bindgen-wcl binary
-      working-directory: crates/wit-bindgen-wcl
-      run: cargo build --bin wit-bindgen-wcl
-
-    - name: Test wit-bindgen-wcl binary (--help)
-      working-directory: crates/wit-bindgen-wcl
-      run: cargo run --bin wit-bindgen-wcl -- --help || [ $? -eq 1 ]
-
-    - name: Regenerate WIT bindings for all examples
-      working-directory: crates/wit-bindgen-wcl
-      run: |
-        echo "Regenerating bindings for all examples..."
-        
-        examples=(
-          "calculator"
-          "complex_return"
-          "func_param"
-          "option_result"
-          "record_response"
-          "single_component"
-          "string_host_guest"
-          "variant_return"
-          "web_scraper"
-        )
-        
-        for example in "${examples[@]}"; do
-          echo "Regenerating bindings for $example..."
-          cargo run --bin wit-bindgen-wcl -- \
-            examples/$example/component/wit \
-            examples/$example/host/src/bindings.rs
-        done
-
-    - name: Build all wit-bindgen-wcl examples
-      working-directory: crates/wit-bindgen-wcl
-      run: cargo build --examples
-
-    - name: Test wit-bindgen-wcl examples
-      working-directory: crates/wit-bindgen-wcl
-      run: |
-        echo "Testing calculator example..."
-        cargo run --example bindgen-calculator
-        
-        echo "Testing single-component example..."
-        cargo run --example bindgen-single-component
-        
-        echo "Testing complex-return example..."
-        cargo run --example bindgen-complex-return
-        
-        echo "Testing func-param example..."
-        cargo run --example bindgen-func-param
-        
-        echo "Testing option-result example..."
-        cargo run --example bindgen-option-result
-        
-        echo "Testing record-response example..."
-        cargo run --example bindgen-record-response
-        
-        echo "Testing string-host-guest example..."
-        cargo run --example bindgen-string-host-guest
-        
-        echo "Testing variant-return example..."
-        cargo run --example bindgen-variant-return
-        
-        echo "Testing web-scraper example..."
-        cargo run --example bindgen-web-scraper
 
   # ============================================================
   # Cross-platform Compilation Tests
@@ -201,14 +61,12 @@ jobs:
     name: Cross-compile (${{ matrix.target }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - target: x86_64-pc-windows-gnu
-            packages: mingw-w64
           - target: aarch64-unknown-linux-gnu
             packages: gcc-aarch64-linux-gnu
-          - target: armv7-unknown-linux-gnueabihf
-            packages: gcc-arm-linux-gnueabihf
+            linker: aarch64-linux-gnu-gcc
 
     steps:
     - name: Checkout code
@@ -227,13 +85,7 @@ jobs:
     - name: Configure linker
       run: |
         target_upper=$(echo ${{ matrix.target }} | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-        if [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]; then
-          echo "CARGO_TARGET_${target_upper}_LINKER=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
-        elif [[ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]]; then
-          echo "CARGO_TARGET_${target_upper}_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-        elif [[ "${{ matrix.target }}" == "armv7-unknown-linux-gnueabihf" ]]; then
-          echo "CARGO_TARGET_${target_upper}_LINKER=arm-linux-gnueabihf-gcc" >> $GITHUB_ENV
-        fi
+        echo "CARGO_TARGET_${target_upper}_LINKER=${{ matrix.linker }}" >> $GITHUB_ENV
 
     - name: Cache dependencies
       uses: actions/cache@v4
@@ -256,6 +108,7 @@ jobs:
     name: Android Build (${{ matrix.target }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         target:
           - aarch64-linux-android
@@ -295,54 +148,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cargo-android-${{ matrix.target }}-
 
-    - name: Build waclay for Android
-      working-directory: crates/waclay
-      run: cargo ndk --target ${{ matrix.target }} --platform 21 build
-
-  # ============================================================
-  # WebAssembly Component Tests
-  # ============================================================
-  wasm_components:
-    name: WebAssembly Component Build
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: wasm32-unknown-unknown,wasm32-wasip1
-
-    - name: Install wasm-tools
-      run: |
-        curl -sSfL https://github.com/bytecodealliance/wasm-tools/releases/download/v1.239.0/wasm-tools-1.239.0-x86_64-linux.tar.gz | tar xzf -
-        sudo mv wasm-tools-1.239.0-x86_64-linux/wasm-tools /usr/local/bin/
-
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-wasm-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-wasm-
-
-    - name: Build WebAssembly components (waclay examples)
-      working-directory: crates/waclay/examples
-      run: |
-        for dir in */; do
-          if [ -f "${dir}build.sh" ]; then
-            echo "Building component in $dir..."
-            cd "$dir"
-            chmod +x build.sh
-            ./build.sh
-            cd ..
-          fi
-        done
+    - name: Build waclay and every backend for Android
+      run: >
+        cargo ndk --target ${{ matrix.target }} --platform 24 build --release
+        -p waclay -p waclay-wasmi -p waclay-wasmtime -p waclay-wasmer
 
   # ============================================================
   # Code Quality Checks
@@ -372,31 +181,10 @@ jobs:
           ${{ runner.os }}-cargo-lint-
 
     - name: Check code formatting
-      run: |
-        # Format check excluding generated bindings and example files
-        # Exclude: 
-        #   - */host/bindings.rs (generated host bindings)
-        #   - */host/src/bindings.rs (generated host bindings)
-        #   - */component/src/bindings.rs (generated component bindings)
-        #   - */host/src/main.rs (example host)
-        #   - */component/src/lib.rs (example component)
-        #   - */examples/*/src/lib.rs (example component)
-        cargo fmt --all -- --check $(find . -name '*.rs' \
-          -not -path '*/host/bindings.rs' \
-          -not -path '*/host/src/bindings.rs' \
-          -not -path '*/component/src/bindings.rs' \
-          -not -path '*/host/src/main.rs' \
-          -not -path '*/component/src/lib.rs' \
-          -not -path '*/examples/*/src/lib.rs' \
-          -not -path './target/*')
+      run: cargo fmt --all -- --check
 
-    - name: Run clippy (waclay)
-      working-directory: crates/waclay
-      run: cargo clippy --all-targets -- -D warnings
-
-    - name: Run clippy (wit-bindgen-wcl)
-      working-directory: crates/wit-bindgen-wcl
-      run: cargo clippy --all-targets -- -D warnings
+    - name: Run clippy
+      run: cargo clippy --workspace --all-targets -- -D warnings
 
   # ============================================================
   # Security Audit

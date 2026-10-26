@@ -1,0 +1,18 @@
+[package]
+name = "waclay-wasmi"
+description = "wasmi interpreter backend for Waclay — the reference implementation."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+waclay = { workspace = true }
+wasmi = { workspace = true }
+
+[dev-dependencies]
+wat = { workspace = true }

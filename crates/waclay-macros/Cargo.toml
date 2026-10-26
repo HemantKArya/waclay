@@ -1,0 +1,18 @@
+[package]
+name = "waclay-macros"
+description = "Procedural macros for Waclay: `bindgen!` generates typed WIT bindings."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"

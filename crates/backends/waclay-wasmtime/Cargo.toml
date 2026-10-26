@@ -1,0 +1,18 @@
+[package]
+name = "waclay-wasmtime"
+description = "wasmtime (Cranelift JIT) backend for Waclay — near-native performance."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+waclay = { workspace = true }
+wasmtime = { workspace = true, features = ["cranelift", "runtime", "component-model"] }
+
+[dev-dependencies]
+wat = { workspace = true }

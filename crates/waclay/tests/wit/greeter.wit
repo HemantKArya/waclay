@@ -1,0 +1,28 @@
+package test:greeter;
+
+interface host {
+    log: func(msg: string);
+}
+
+interface calc {
+    record point {
+        x: s32,
+        y: s32,
+    }
+
+    variant shape {
+        circle(f64),
+        rect(point),
+        none,
+    }
+
+    add: func(a: u32, b: u32) -> u32;
+    swap: func(p: point) -> point;
+    area: func(s: shape) -> f64;
+    announce: func(msg: string) -> u32;
+}
+
+world greeter {
+    import host;
+    export calc;
+}

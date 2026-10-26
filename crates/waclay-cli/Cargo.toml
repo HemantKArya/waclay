@@ -1,0 +1,27 @@
+[package]
+name = "waclay-cli"
+description = "Command-line tool to inspect and run WebAssembly components on any Waclay engine."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+waclay = { workspace = true }
+waclay-wasmi = { workspace = true }
+waclay-wasmtime = { workspace = true }
+serde_json = "1"
+
+[target.'cfg(not(windows))'.dependencies]
+waclay-wasmer = { workspace = true }
+
+[features]
+default = ["wasmi", "wasmtime", "wasmer"]
+wasmi = []
+wasmtime = []
+wasmer = []
+
